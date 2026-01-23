@@ -2,6 +2,8 @@ import boto3
 import json
 import os
 
+ses = boto3.client('ses', region_name=os.environ.get('AWS_REGION', 'us-east-1'))
+
 def lambda_handler(event, context):
     
     try:
@@ -138,18 +140,46 @@ The Brewcraft Team
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
                 """
             
-            # Log email content for demo
-            print(f"Subject: {subject}")
-            print(message)
-            print(f"✅ Email logged (Production: would send via SES)")
+            # Send via SES
+            try:
+                source_email = os.environ.get('SOURCE_EMAIL', 'tonytai2611@gmail.com')
+                
+                # Check if we have a valid source email
+                if not source_email or '@' not in source_email:
+                    print("⚠️ SOURCE_EMAIL environment variable not set. Email sending skipped.")
+                    print(f"Would have sent to {email}: {subject}")
+                    continue
 
-        
+                response = ses.send_email(
+                    Source=source_email,
+                    Destination={
+                        'ToAddresses': [email]
+                    },
+                    Message={
+                        'Subject': {
+                            'Data': subject,
+                            'Charset': 'UTF-8'
+                        },
+                        'Body': {
+                            'Text': {
+                                'Data': message,
+                                'Charset': 'UTF-8'
+                            },
+                            'Html': {
+                                'Data': f"<pre style='font-family: monospace;'>{message}</pre>",
+                                'Charset': 'UTF-8'
+                            }
+                        }
+                    }
+                )
+                print(f"✅ Email sent to {email}: {response['MessageId']}")
+            except Exception as ses_error:
+                print(f"❌ Failed to send SES email to {email}: {str(ses_error)}")
+
         return {
             'statusCode': 200,
             'body': json.dumps({
-                'message': 'Email notification processed',
-                'email': email,
-                'status': status
+                'message': 'Email processing complete'
             })
         }
         
