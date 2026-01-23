@@ -20,11 +20,11 @@ const Hero = () => {
       </div>
 
       {/* Logo Badge - Center Top */}
-      <motion.div 
+      <motion.div
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.8 }}
-        className="absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10"
+        className="hidden md:block absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10"
       >
         <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-2xl border-4 border-teal-500">
           <div className="text-center">
@@ -46,7 +46,7 @@ const Hero = () => {
             >
               MEMORABLE EXPERIENCE
             </motion.p>
-            
+
             <motion.h1
               initial={{ y: 30, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -64,7 +64,7 @@ const Hero = () => {
               transition={{ delay: 0.7 }}
               className="text-white/80 text-lg mb-8 max-w-lg"
             >
-              Experience the perfect blend of exquisite cuisine and artisan beverages — 
+              Experience the perfect blend of exquisite cuisine and artisan beverages —
               fresh ingredients, passionate cooking, and a warm atmosphere.
             </motion.p>
 
