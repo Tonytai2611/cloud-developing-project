@@ -4,7 +4,7 @@ import { UtensilsCrossed, Flame, Clock, Star, ArrowRight, Leaf, ChefHat, CheckCi
 import { tableApi } from "../../services/tableApi";
 import { bookingApi } from "../../services/bookingApi";
 import { toast } from "sonner";
-import { getCurrentUser } from 'aws-amplify/auth';
+import { useAuth } from '../../hooks/useAuth';
 
 // Animation variants
 const fadeInUp = {
@@ -23,6 +23,7 @@ const staggerContainer = {
 };
 
 const IntroductionComponent = () => {
+  const { user } = useAuth();
   const [tables, setTables] = useState([]);
   const [bookingSuccess, setBookingSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -38,18 +39,13 @@ const IntroductionComponent = () => {
 
   useEffect(() => {
     fetchTables();
-    fetchUserEmail();
-  }, []);
-
-  const fetchUserEmail = async () => {
-    try {
-      const user = await getCurrentUser();
-      const email = user.signInDetails?.loginId || user.attributes?.email || '';
-      setFormData(prev => ({ ...prev, email }));
-    } catch (error) {
-      console.log('User not authenticated');
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        email: user.email || user.signInDetails?.loginId || ''
+      }));
     }
-  };
+  }, [user]);
 
   const fetchTables = async () => {
     try {

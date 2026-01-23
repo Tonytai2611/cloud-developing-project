@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, X, Send, Coffee, Sparkles } from 'lucide-react';
 
 // WebSocket API Gateway URL
-const WS_URL = 'wss://3w3qjyvvl9.execute-api.us-east-1.amazonaws.com/production';
+const WS_URL = 'wss://4r17uij0de.execute-api.us-east-1.amazonaws.com/production';
 
 export default function UserChat({ userEmail }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -216,8 +216,8 @@ export default function UserChat({ userEmail }) {
 
                                             <div
                                                 className={`px-3.5 py-2.5 rounded-2xl ${isUser
-                                                        ? 'bg-gradient-to-br from-[#14B8A6] to-[#0D9488] text-white rounded-br-md'
-                                                        : 'bg-white text-gray-800 rounded-bl-md shadow-sm border border-gray-100'
+                                                    ? 'bg-gradient-to-br from-[#14B8A6] to-[#0D9488] text-white rounded-br-md'
+                                                    : 'bg-white text-gray-800 rounded-bl-md shadow-sm border border-gray-100'
                                                     }`}
                                             >
                                                 <p className="text-sm break-words leading-relaxed">{msg.message}</p>

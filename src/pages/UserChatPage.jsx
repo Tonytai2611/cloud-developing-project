@@ -29,7 +29,7 @@ const UserChatPage = () => {
     const [userEmail, setUserEmail] = useState(null); // Dynamic user email from cookie
 
     const messagesEndRef = useRef(null);
-    const WS_URL = "wss://3w3qjyvvl9.execute-api.us-east-1.amazonaws.com/production";
+    const WS_URL = "wss://4r17uij0de.execute-api.us-east-1.amazonaws.com/production";
 
     // Format timestamp to local Vietnam time
     const formatTimestamp = (timestamp) => {

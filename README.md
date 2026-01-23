@@ -10,7 +10,7 @@ A comprehensive cloud-based restaurant and cafe management system built with Rea
 
 
 - **Production Application (ALB)**: [http://dev-brewcraft-alb-852606234.us-east-1.elb.amazonaws.com](http://dev-brewcraft-alb-852606234.us-east-1.elb.amazonaws.com)
-- **API Gateway**: [https://4jawv6e5e1.execute-api.us-east-1.amazonaws.com](https://4jawv6e5e1.execute-api.us-east-1.amazonaws.com)
+- **API Gateway**: [https://okvnue9l2e.execute-api.us-east-1.amazonaws.com/production](https://okvnue9l2e.execute-api.us-east-1.amazonaws.com/production)
 
 ## 🏗️ System Architecture
 
@@ -179,8 +179,8 @@ cloud-developing-group/
    
    # API Endpoints
    VITE_API_URL=http://dev-brewcraft-alb-852606234.us-east-1.elb.amazonaws.com
-   REACT_APP_API_BASE_URL=https://4jawv6e5e1.execute-api.us-east-1.amazonaws.com
-   VITE_API_GATEWAY_URL=https://4jawv6e5e1.execute-api.us-east-1.amazonaws.com
+   REACT_APP_API_BASE_URL=https://okvnue9l2e.execute-api.us-east-1.amazonaws.com/production
+   VITE_API_GATEWAY_URL=https://okvnue9l2e.execute-api.us-east-1.amazonaws.com/production
    ```
 
 4. **Start the development servers**
@@ -259,13 +259,13 @@ docker-compose up --build
 
 ### AWS Cognito
 - **User Pool ID**: `us-east-1_phpgibZJD`
-- **Client ID**: `10g093m0qo9fj9hsar5ngtp8ej`
+- **Client ID**: `5fjijmj2a8q3n919rga3mhlnpi`
 - **Authentication Flow**: USER_PASSWORD_AUTH
 
 ### API Endpoints
 - **Custom Domain**: `https://brewcraft.rocks`
 - **ALB URL**: `http://dev-brewcraft-alb-852606234.us-east-1.elb.amazonaws.com`
-- **API Gateway**: `https://4jawv6e5e1.execute-api.us-east-1.amazonaws.com`
+- **API Gateway**: `https://okvnue9l2e.execute-api.us-east-1.amazonaws.com/production`
 
 ### DynamoDB Tables
 - `USERS_TABLE` - User profiles and metadata

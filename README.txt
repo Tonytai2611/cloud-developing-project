@@ -19,7 +19,7 @@ Production Application Load Balancer (ALB):
 http://dev-brewcraft-alb-852606234.us-east-1.elb.amazonaws.com
 
 API Gateway Endpoint:
-https://4jawv6e5e1.execute-api.us-east-1.amazonaws.com
+https://okvnue9l2e.execute-api.us-east-1.amazonaws.com/production
 
 TECHNOLOGY STACK
 --------------------------------------------------------------------------------
@@ -109,13 +109,13 @@ Region: us-east-1 (US East - N. Virginia)
 
 Cognito Configuration:
   - User Pool ID: us-east-1_phpgibZJD
-  - Client ID: 10g093m0qo9fj9hsar5ngtp8ej
+  - Client ID: 5fjijmj2a8q3n919rga3mhlnpi
   - Authentication Flow: USER_PASSWORD_AUTH
 
 API Endpoints:
   - Custom Domain: http://brewcraft.rocks
   - ALB URL: http://dev-brewcraft-alb-852606234.us-east-1.elb.amazonaws.com
-  - API Gateway: https://4jawv6e5e1.execute-api.us-east-1.amazonaws.com
+  - API Gateway: https://okvnue9l2e.execute-api.us-east-1.amazonaws.com/production
 
 DynamoDB Tables:
   - USERS_TABLE (User profiles and metadata)

@@ -2,19 +2,22 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Mail, ArrowLeft, RefreshCw } from 'lucide-react';
+import AWS from 'aws-sdk';
+import CryptoJS from 'crypto-js';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-const API_BASE = 'https://4jawv6e5e1.execute-api.us-east-1.amazonaws.com';
+// Configuration from Header.jsx
+const clientId = "5fjijmj2a8q3n919rga3mhlnpi";
+const clientSecret = "q8kaourmo7v4v34sgek9j9g4qa7703d5o28a0n92jl7ltbvpaf7";
+const region = "us-east-1";
 
 export default function VerifyEmail() {
   const query = useQuery();
   const username = query.get('username') || localStorage.getItem('username') || '';
   const storedEmail = localStorage.getItem('email') || '';
-  const storedName = localStorage.getItem('name') || '';
-  const storedRole = localStorage.getItem('role') || 'customer';
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -28,6 +31,13 @@ export default function VerifyEmail() {
       inputRefs.current[0].focus();
     }
   }, []);
+
+  // Generate SECRET_HASH for Cognito
+  const generateSecretHash = (username, clientId, clientSecret) => {
+    const message = username + clientId;
+    const hash = CryptoJS.HmacSHA256(message, clientSecret);
+    return CryptoJS.enc.Base64.stringify(hash);
+  };
 
   const handleChange = (index, value) => {
     // Only allow numbers
@@ -93,29 +103,27 @@ export default function VerifyEmail() {
     }
     setError(null);
     setLoading(true);
+
     try {
-      const res = await fetch(`${API_BASE}/confirm`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, code, email: storedEmail, name: storedName, role: storedRole })
-      });
+      const secretHash = generateSecretHash(username, clientId, clientSecret);
+      const cognito = new AWS.CognitoIdentityServiceProvider({ region });
 
-      let data;
-      const contentType = res.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        data = await res.json();
-      } else {
-        const text = await res.text();
-        throw new Error(`Server returned non-JSON response: ${text.substring(0, 200)}`);
-      }
+      const params = {
+        ClientId: clientId,
+        SecretHash: secretHash,
+        Username: username,
+        ConfirmationCode: code
+      };
 
-      if (!res.ok) throw new Error(data.error || 'Confirm failed');
+      await cognito.confirmSignUp(params).promise();
+
       toast.success("Email verified successfully!", {
         description: "You can now login to your account"
       });
       navigate('/');
     } catch (err) {
-      setError(err.message || 'Confirmation failed');
+      console.error("Verification failed:", err);
+      setError(err.message || 'Verification failed');
     } finally {
       setLoading(false);
     }
@@ -124,12 +132,25 @@ export default function VerifyEmail() {
   const handleResend = async () => {
     setResending(true);
     try {
-      // Add your resend API call here
+      const secretHash = generateSecretHash(username, clientId, clientSecret);
+      const cognito = new AWS.CognitoIdentityServiceProvider({ region });
+
+      const params = {
+        ClientId: clientId,
+        SecretHash: secretHash,
+        Username: username
+      };
+
+      await cognito.resendConfirmationCode(params).promise();
+
       toast.success("Code resent!", {
         description: "Please check your email for the new code"
       });
     } catch (err) {
-      toast.error("Failed to resend code");
+      console.error("Resend failed:", err);
+      toast.error("Failed to resend code", {
+        description: err.message
+      });
     } finally {
       setResending(false);
     }
