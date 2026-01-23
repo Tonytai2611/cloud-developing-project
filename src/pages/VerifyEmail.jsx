@@ -9,15 +9,20 @@ function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-// Configuration from Header.jsx
-const clientId = "5fjijmj2a8q3n919rga3mhlnpi";
-const clientSecret = "q8kaourmo7v4v34sgek9j9g4qa7703d5o28a0n92jl7ltbvpaf7";
-const region = "us-east-1";
+// Configuration from Header.jsx (kept for reference if needed, but we use API now)
+// const clientId = "5fjijmj2a8q3n919rga3mhlnpi";
+// const clientSecret = "q8kaourmo7v4v34sgek9j9g4qa7703d5o28a0n92jl7ltbvpaf7";
+// const region = "us-east-1";
+
+const API_URL = process.env.VITE_API_GATEWAY_URL || 'https://okvnue9l2e.execute-api.us-east-1.amazonaws.com/production';
 
 export default function VerifyEmail() {
   const query = useQuery();
   const username = query.get('username') || localStorage.getItem('username') || '';
   const storedEmail = localStorage.getItem('email') || '';
+  const storedName = localStorage.getItem('name') || '';
+  const storedRole = localStorage.getItem('role') || 'customer';
+
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -32,12 +37,7 @@ export default function VerifyEmail() {
     }
   }, []);
 
-  // Generate SECRET_HASH for Cognito
-  const generateSecretHash = (username, clientId, clientSecret) => {
-    const message = username + clientId;
-    const hash = CryptoJS.HmacSHA256(message, clientSecret);
-    return CryptoJS.enc.Base64.stringify(hash);
-  };
+  // No longer need generateSecretHash here as backend handles it
 
   const handleChange = (index, value) => {
     // Only allow numbers
@@ -105,17 +105,25 @@ export default function VerifyEmail() {
     setLoading(true);
 
     try {
-      const secretHash = generateSecretHash(username, clientId, clientSecret);
-      const cognito = new AWS.CognitoIdentityServiceProvider({ region });
+      const response = await fetch(`${API_URL}/confirm`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username,
+          code,
+          email: storedEmail,
+          name: storedName,
+          role: storedRole
+        }),
+      });
 
-      const params = {
-        ClientId: clientId,
-        SecretHash: secretHash,
-        Username: username,
-        ConfirmationCode: code
-      };
+      const data = await response.json();
 
-      await cognito.confirmSignUp(params).promise();
+      if (!response.ok) {
+        throw new Error(data.error || 'Verification failed');
+      }
 
       toast.success("Email verified successfully!", {
         description: "You can now login to your account"
@@ -132,16 +140,21 @@ export default function VerifyEmail() {
   const handleResend = async () => {
     setResending(true);
     try {
-      const secretHash = generateSecretHash(username, clientId, clientSecret);
-      const cognito = new AWS.CognitoIdentityServiceProvider({ region });
+      const response = await fetch(`${API_URL}/verify-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username
+        }),
+      });
 
-      const params = {
-        ClientId: clientId,
-        SecretHash: secretHash,
-        Username: username
-      };
+      const data = await response.json();
 
-      await cognito.resendConfirmationCode(params).promise();
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to resend code');
+      }
 
       toast.success("Code resent!", {
         description: "Please check your email for the new code"

@@ -23,6 +23,7 @@ const Header = () => {
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
     const [role, setRole] = useState('customer'); // Default role
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -88,6 +89,22 @@ const Header = () => {
     const onSubmit = async (event) => {
         event.preventDefault();
 
+        if (!username || !password || !name || !email || !phoneNumber) {
+            toast.error("Missing fields", {
+                description: "Please fill in all fields to register"
+            });
+            return;
+        }
+
+        // Basic phone validation (allow spaces, dashes, parentheses, plus)
+        const cleanPhone = phoneNumber.replace(/[\s()-]/g, '');
+        if (cleanPhone.length < 10) {
+            toast.error("Invalid phone number", {
+                description: "Please enter a valid phone number (at least 10 digits)"
+            });
+            return;
+        }
+
         const clientId = "5fjijmj2a8q3n919rga3mhlnpi";
         const clientSecret = "q8kaourmo7v4v34sgek9j9g4qa7703d5o28a0n92jl7ltbvpaf7";
         const region = "us-east-1";
@@ -95,6 +112,11 @@ const Header = () => {
         const secretHash = generateSecretHash(username, clientId, clientSecret);
 
         const cognito = new AWS.CognitoIdentityServiceProvider({ region });
+
+        // Format phone number to E.164
+        // If it sends with +, use as is. If no +, assume it needs one. 
+        // Note: Ideally we'd valid country code, but + prepending is a safe fallback for now if user omits it.
+        const formattedPhoneNumber = cleanPhone.startsWith('+') ? cleanPhone : `+${cleanPhone}`;
 
         const params = {
             ClientId: clientId,
@@ -109,6 +131,10 @@ const Header = () => {
                 {
                     Name: "name",
                     Value: name,
+                },
+                {
+                    Name: "phone_number",
+                    Value: formattedPhoneNumber,
                 },
             ],
         };
@@ -376,22 +402,44 @@ const Header = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Email Field */}
-                                            <div>
-                                                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                                                    Email Address
-                                                </label>
-                                                <div className="relative">
-                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                        <Mail className="h-4 w-4 text-gray-400" />
+                                            {/* Email and Phone in 2 columns */}
+                                            <div className="grid grid-cols-2 gap-3">
+                                                {/* Email Field */}
+                                                <div>
+                                                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                                                        Email Address
+                                                    </label>
+                                                    <div className="relative">
+                                                        <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                                                            <Mail className="h-4 w-4 text-gray-400" />
+                                                        </div>
+                                                        <input
+                                                            type="email"
+                                                            id="email"
+                                                            className="w-full pl-8 pr-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors bg-gray-50 focus:bg-white text-sm"
+                                                            placeholder="Enter email"
+                                                            onChange={(event) => setEmail(event.target.value)}
+                                                        />
                                                     </div>
-                                                    <input
-                                                        type="email"
-                                                        id="email"
-                                                        className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors bg-gray-50 focus:bg-white text-sm"
-                                                        placeholder="Enter your email"
-                                                        onChange={(event) => setEmail(event.target.value)}
-                                                    />
+                                                </div>
+
+                                                {/* Phone Number Field */}
+                                                <div>
+                                                    <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                                                        Phone Number
+                                                    </label>
+                                                    <div className="relative">
+                                                        <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                                                            <span className="text-gray-400 text-sm">📞</span>
+                                                        </div>
+                                                        <input
+                                                            type="tel"
+                                                            id="phoneNumber"
+                                                            className="w-full pl-8 pr-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors bg-gray-50 focus:bg-white text-sm"
+                                                            placeholder="0123456789"
+                                                            onChange={(event) => setPhoneNumber(event.target.value)}
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
 
