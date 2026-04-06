@@ -21,14 +21,14 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
   role       = aws_iam_role.eks_cluster.name
 }
 
-# === 2. Khởi tạo EKS Cluster ===
+
 resource "aws_eks_cluster" "main" {
   name     = "${var.environment}-brewcraft-cluster"
   role_arn = aws_iam_role.eks_cluster.arn
 
   vpc_config {
     subnet_ids = aws_subnet.public[*].id
-    # Để đơn giản trong môi trường Dev, bật public access để bạn có thể truy cập bằng kubectl từ local
+    # Để đơn giản trong môi trường Dev, bật public access để bạ
     endpoint_public_access = true
   }
 

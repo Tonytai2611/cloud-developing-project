@@ -1,0 +1,25 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      AWS_REGION: "us-east-1"
+      AWS_ACCESS_KEY_ID: ""
+      AWS_SECRET_ACCESS_KEY: ""
+      AWS_SESSION_TOKEN: ""
+      COGNITO_CLIENT_ID: ""
+      COGNITO_CLIENT_SECRET: ""
+      COGNITO_USER_POOL_ID: ""
+      USERS_TABLE: ""
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    restart: unless-stopped
