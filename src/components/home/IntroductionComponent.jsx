@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { UtensilsCrossed, Flame, Clock, Star, ArrowRight, Leaf, ChefHat, CheckCircle } from "lucide-react";
-import { tableApi } from "../../services/tableApi";
-import { bookingApi } from "../../services/bookingApi";
+import { tableApi } from "../table/services/tableApi";
+import { bookingApi } from "../booking/services/bookingApi";
 import { toast } from "sonner";
 import { useAuth } from '../../hooks/useAuth';
 

@@ -1,8 +1,8 @@
 // Main API Service - Re-exports all API modules
 // Import individual API modules
-import { menuApi } from './menuApi';
-import { tableApi } from './tableApi';
-import { bookingApi } from './bookingApi';
+import { menuApi } from '../components/menu/services/menuApi';
+import { tableApi } from '../components/table/services/tableApi';
+import { bookingApi } from '../components/booking/services/bookingApi';
 
 // Re-export for backward compatibility
 export const api = {

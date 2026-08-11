@@ -11,7 +11,7 @@ import {
   Trash2,
   Bell
 } from "lucide-react";
-import AdminHeader from "../../components/application_component/AdminHeader";
+import AdminHeader from "../../components/layout/AdminHeader";
 import { useAuth } from '../../hooks/useAuth';
 
 // Helper for notifications

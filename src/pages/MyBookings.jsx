@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { bookingApi } from '../services/bookingApi';
+import { useMyBookings } from '../components/booking/hooks/useMyBookings';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Calendar, Clock, Users, MapPin, UtensilsCrossed, AlertCircle,
     CheckCircle, XCircle, Ban, Loader2, ArrowRight
 } from 'lucide-react';
-import { toast } from 'sonner';
 
 // Status Badge Component
 const StatusBadge = ({ status }) => {
@@ -55,7 +54,6 @@ const StatusBadge = ({ status }) => {
 
 // Booking Card Component
 const BookingCard = ({ booking, onCancel, isCancelling }) => {
-    const navigate = useNavigate();
     const canCancel = ['PENDING', 'CONFIRMED'].includes(booking.status);
 
     const formatDate = (dateStr) => {
@@ -187,87 +185,7 @@ const BookingCard = ({ booking, onCancel, isCancelling }) => {
 export default function MyBookings() {
     const navigate = useNavigate();
     const { user } = useAuth();
-    const [bookings, setBookings] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [cancellingId, setCancellingId] = useState(null);
-
-    useEffect(() => {
-        if (user) {
-            fetchUserBookings();
-        } else {
-            setLoading(false);
-        }
-    }, [user]);
-
-    const fetchUserBookings = async () => {
-        try {
-            setLoading(true);
-
-            // Get user email from useAuth hook
-            const email = user?.email || user?.username || '';
-
-            console.log('🔍 Debug - User object:', user);
-            console.log('🔍 Debug - Email to search:', email);
-
-            if (!email) {
-                toast.error('User not authenticated');
-                setLoading(false);
-                return;
-            }
-
-            // Fetch bookings by user email (using email as userId)
-            const response = await bookingApi.list(email);
-
-            console.log('🔍 Debug - API Response:', response);
-            console.log('🔍 Debug - Bookings data:', response.data);
-
-            // Sort bookings by date (newest first)
-            const sortedBookings = (response.data || []).sort((a, b) => {
-                return new Date(b.createdAt) - new Date(a.createdAt);
-            });
-
-            console.log('🔍 Debug - Sorted bookings:', sortedBookings);
-
-            setBookings(sortedBookings);
-        } catch (error) {
-            console.error('Error fetching bookings:', error);
-            toast.error('Failed to load bookings', {
-                description: error.message || 'Please try again later'
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleCancelBooking = async (bookingId) => {
-        // Confirmation dialog
-        const confirmed = window.confirm(
-            'Are you sure you want to cancel this booking? This action cannot be undone.'
-        );
-
-        if (!confirmed) return;
-
-        try {
-            setCancellingId(bookingId);
-
-            // Update booking status to CANCELLED
-            await bookingApi.updateStatus(bookingId, 'CANCELLED');
-
-            toast.success('Booking cancelled successfully', {
-                description: 'Your table has been released'
-            });
-
-            // Refresh bookings list
-            await fetchUserBookings();
-        } catch (error) {
-            console.error('Error cancelling booking:', error);
-            toast.error('Failed to cancel booking', {
-                description: error.message || 'Please try again'
-            });
-        } finally {
-            setCancellingId(null);
-        }
-    };
+    const { bookings, cancellingId, handleCancelBooking, loading } = useMyBookings(user);
 
     // Loading State
     if (loading) {

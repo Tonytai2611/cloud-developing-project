@@ -36,3 +36,5 @@ Thumbs.db
 .terraform/
 *.tfstate
 *.tfstate.*
+
+Frontend_Architecture.md

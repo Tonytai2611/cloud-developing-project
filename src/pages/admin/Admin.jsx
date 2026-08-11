@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import AdminHeader from '../../components/application_component/AdminHeader';
+import AdminHeader from '../../components/layout/AdminHeader';
 import { Button } from '../../components/ui/button';
 import {
   LayoutDashboard,

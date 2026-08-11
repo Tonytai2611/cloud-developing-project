@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import Header from './components/application_component/Header';
-import Footer from './components/application_component/Footer';
+import Header from './components/layout/Header';
+import Footer from './components/layout/Footer';
 import UserChatPage from './pages/UserChatPage';
 import Signup from './components/auth/Signup';
 import Home from './pages/Home';

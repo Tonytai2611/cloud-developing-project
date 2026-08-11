@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { MessageCircle, Eye, EyeOff, Mail, Lock, User, Check, X, UserCircle } from "lucide-react";
+import { MessageCircle, Eye, EyeOff, Mail, Lock, User, Check, X, UserCircle, Coffee, Phone } from "lucide-react";
 import { Button } from "../ui/button";
 import {
     Dialog,
@@ -17,7 +17,8 @@ import { useAuth } from '../../hooks/useAuth';
 
 const Header = () => {
     const navigate = useNavigate();
-    const { user, login: authLogin, logout: authLogout, loading: authLoading } = useAuth();
+    const { user, login: authLogin, logout: authLogout } = useAuth();
+    const cafeHeroImage = `${process.env.PUBLIC_URL}/cafe.jpg`;
     const [activeTab, setActiveTab] = useState("login");
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
@@ -249,37 +250,65 @@ const Header = () => {
                                 </Button>
                             </DialogTrigger>
 
-                            <DialogContent className="bg-white p-0 rounded-xl shadow-2xl max-w-md mx-auto overflow-hidden max-h-[90vh] overflow-y-auto">
-                                {/* Header with gradient */}
-                                <div className="bg-gradient-to-r from-teal-500 to-teal-600 p-4 text-white sticky top-0 z-10">
-                                    <DialogHeader>
-                                        <DialogTitle className="text-xl font-bold text-white">
-                                            {activeTab === "login" ? "Welcome Back!" : "Create Account"}
-                                        </DialogTitle>
-                                        <DialogDescription className="text-teal-100 text-sm">
-                                            {activeTab === "login"
-                                                ? "Sign in to access your account"
-                                                : "Fill in the details to get started"}
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                </div>
+                            <DialogContent className="max-h-[92vh] max-w-[92vw] overflow-hidden overflow-y-auto rounded-2xl border-0 bg-transparent p-0 shadow-2xl sm:max-w-3xl">
+                                <div className="grid bg-white md:grid-cols-[0.9fr_1.1fr]">
+                                    <div className="relative hidden overflow-hidden bg-[#123837] p-8 text-white md:flex md:flex-col md:justify-between">
+                                        <img
+                                            src={cafeHeroImage}
+                                            alt=""
+                                            aria-hidden="true"
+                                            className="absolute inset-0 h-full w-full object-cover opacity-25"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-br from-[#0f4c4c]/95 via-[#123837]/90 to-[#2b2118]/95" />
+                                        <div className="relative">
+                                            <div className="mb-10 inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-white/20 bg-white/15 shadow-lg backdrop-blur">
+                                                <Coffee className="h-6 w-6" />
+                                            </div>
+                                            <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-amber-200">
+                                                BrewCraft
+                                            </p>
+                                            <h2 className="text-3xl font-bold leading-tight">
+                                                Fresh coffee, warm tables, one simple account.
+                                            </h2>
+                                            <p className="mt-4 text-sm leading-6 text-white/75">
+                                                Manage bookings, chat with the cafe, and keep your favorite orders close.
+                                            </p>
+                                        </div>
+                                        <div className="relative rounded-2xl border border-white/15 bg-white/10 p-4 text-sm text-white/80 backdrop-blur">
+                                            <div className="font-semibold text-white">Today at BrewCraft</div>
+                                            <div className="mt-1">Reserve faster and come back to your saved details anytime.</div>
+                                        </div>
+                                    </div>
 
-                                <div className="p-4">
+                                    <div className="relative p-5 sm:p-7">
+                                        <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-teal-500 via-amber-300 to-cyan-500" />
+                                        <DialogHeader className="pr-8 text-left">
+                                            <DialogTitle className="text-2xl font-bold leading-tight text-slate-950">
+                                                {activeTab === "login" ? "Welcome back" : "Create your account"}
+                                            </DialogTitle>
+                                            <DialogDescription className="mt-1 text-sm text-slate-500">
+                                                {activeTab === "login"
+                                                    ? "Sign in to continue your BrewCraft experience."
+                                                    : "Join BrewCraft to book tables and manage your visits."}
+                                            </DialogDescription>
+                                        </DialogHeader>
                                     {/* Tab Buttons */}
-                                    <div className="flex bg-gray-100 p-1 rounded-lg mb-4">
+                                    <div className="mt-6 mb-5 grid grid-cols-2 rounded-xl bg-slate-100 p-1">
                                         <button
-                                            className={`flex-1 px-4 py-2 font-medium transition-all rounded-md text-sm ${activeTab === "login"
-                                                ? "bg-white text-teal-600 shadow-sm"
-                                                : "text-gray-500 hover:text-gray-700"
+                                            type="button"
+                                            className={`rounded-lg px-4 py-2.5 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 ${activeTab === "login"
+                                                ? "bg-white text-teal-700 shadow-sm"
+                                                : "text-slate-500 hover:text-slate-800"
                                                 }`}
                                             onClick={() => setActiveTab("login")}
                                         >
                                             Login
                                         </button>
                                         <button
-                                            className={`flex-1 px-4 py-2 font-medium transition-all rounded-md text-sm ${activeTab === "register"
-                                                ? "bg-white text-teal-600 shadow-sm"
-                                                : "text-gray-500 hover:text-gray-700"
+                                            type="button"
+                                            className={`rounded-lg px-4 py-2.5 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 ${activeTab === "register"
+                                                ? "bg-white text-teal-700 shadow-sm"
+                                                : "text-slate-500 hover:text-slate-800"
                                                 }`}
                                             onClick={() => setActiveTab("register")}
                                         >
@@ -288,21 +317,22 @@ const Header = () => {
                                     </div>
 
                                     {activeTab === "login" && (
-                                        <form className="space-y-3">
+                                        <form className="space-y-4" onSubmit={onSubmitLogin}>
                                             {/* Username Field */}
                                             <div>
-                                                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                                                <label htmlFor="username" className="block text-sm font-semibold text-slate-700 mb-1.5">
                                                     Username
                                                 </label>
                                                 <div className="relative">
-                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                        <User className="h-4 w-4 text-gray-400" />
+                                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                                        <User className="h-4 w-4 text-teal-600" />
                                                     </div>
                                                     <input
                                                         type="text"
                                                         id="username"
-                                                        className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors bg-gray-50 focus:bg-white text-sm"
+                                                        className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 text-sm text-slate-900 shadow-inner transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-500/15"
                                                         placeholder="Enter your username"
+                                                        value={username}
                                                         onChange={(event) => setUsername(event.target.value)}
                                                     />
                                                 </div>
@@ -310,24 +340,25 @@ const Header = () => {
 
                                             {/* Password Field */}
                                             <div>
-                                                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                                                <label htmlFor="password" className="block text-sm font-semibold text-slate-700 mb-1.5">
                                                     Password
                                                 </label>
                                                 <div className="relative">
-                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                        <Lock className="h-4 w-4 text-gray-400" />
+                                                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                                        <Lock className="h-4 w-4 text-teal-600" />
                                                     </div>
                                                     <input
                                                         type={showPassword ? "text" : "password"}
                                                         id="password"
-                                                        className="w-full pl-9 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors bg-gray-50 focus:bg-white text-sm"
+                                                        className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-11 text-sm text-slate-900 shadow-inner transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-500/15"
                                                         placeholder="Enter your password"
+                                                        value={password}
                                                         onChange={(event) => setPassword(event.target.value)}
                                                     />
                                                     <button
                                                         type="button"
                                                         onClick={() => setShowPassword(!showPassword)}
-                                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 transition-colors hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
                                                     >
                                                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                                     </button>
@@ -336,15 +367,15 @@ const Header = () => {
 
                                             {/* Forgot Password */}
                                             <div className="flex justify-end">
-                                                <a href="#" className="text-xs text-teal-600 hover:text-teal-500 font-medium">
+                                                <button type="button" className="text-xs text-teal-700 hover:text-teal-600 font-semibold">
                                                     Forgot password?
-                                                </a>
+                                                </button>
                                             </div>
 
                                             <Button
-                                                onClick={onSubmitLogin}
+                                                type="submit"
                                                 disabled={loading}
-                                                className="w-full bg-teal-500 text-white hover:bg-teal-600 transition-all py-2 rounded-lg font-medium shadow-sm disabled:opacity-50"
+                                                className="h-11 w-full rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg shadow-teal-600/20 transition-all hover:from-teal-700 hover:to-cyan-700 hover:shadow-xl hover:shadow-teal-600/25 focus-visible:ring-teal-600 disabled:opacity-50"
                                             >
                                                 {loading ? (
                                                     <span className="flex items-center justify-center gap-2">
@@ -362,21 +393,22 @@ const Header = () => {
                                     {activeTab === "register" && (
                                         <form className="space-y-3" onSubmit={onSubmit}>
                                             {/* Name and Email in 2 columns */}
-                                            <div className="grid grid-cols-2 gap-3">
+                                            <div className="grid gap-3 sm:grid-cols-2">
                                                 {/* Name Field */}
                                                 <div>
-                                                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                                                    <label htmlFor="name" className="block text-sm font-semibold text-slate-700 mb-1.5">
                                                         Full Name
                                                     </label>
                                                     <div className="relative">
-                                                        <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
-                                                            <User className="h-4 w-4 text-gray-400" />
+                                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                            <User className="h-4 w-4 text-teal-600" />
                                                         </div>
                                                         <input
                                                             type="text"
                                                             id="name"
-                                                            className="w-full pl-8 pr-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors bg-gray-50 focus:bg-white text-sm"
+                                                            className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-900 shadow-inner transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-500/15"
                                                             placeholder="Your name"
+                                                            value={name}
                                                             onChange={(event) => setName(event.target.value)}
                                                         />
                                                     </div>
@@ -384,18 +416,19 @@ const Header = () => {
 
                                                 {/* Username Field */}
                                                 <div>
-                                                    <label htmlFor="reg-username" className="block text-sm font-medium text-gray-700 mb-1">
+                                                    <label htmlFor="reg-username" className="block text-sm font-semibold text-slate-700 mb-1.5">
                                                         Username
                                                     </label>
                                                     <div className="relative">
-                                                        <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
-                                                            <User className="h-4 w-4 text-gray-400" />
+                                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                            <User className="h-4 w-4 text-teal-600" />
                                                         </div>
                                                         <input
                                                             type="text"
                                                             id="reg-username"
-                                                            className="w-full pl-8 pr-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors bg-gray-50 focus:bg-white text-sm"
+                                                            className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-900 shadow-inner transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-500/15"
                                                             placeholder="Username"
+                                                            value={username}
                                                             onChange={(event) => setUsername(event.target.value)}
                                                         />
                                                     </div>
@@ -403,21 +436,22 @@ const Header = () => {
                                             </div>
 
                                             {/* Email and Phone in 2 columns */}
-                                            <div className="grid grid-cols-2 gap-3">
+                                            <div className="grid gap-3 sm:grid-cols-2">
                                                 {/* Email Field */}
                                                 <div>
-                                                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                                                    <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-1.5">
                                                         Email Address
                                                     </label>
                                                     <div className="relative">
-                                                        <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
-                                                            <Mail className="h-4 w-4 text-gray-400" />
+                                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                            <Mail className="h-4 w-4 text-teal-600" />
                                                         </div>
                                                         <input
                                                             type="email"
                                                             id="email"
-                                                            className="w-full pl-8 pr-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors bg-gray-50 focus:bg-white text-sm"
+                                                            className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-900 shadow-inner transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-500/15"
                                                             placeholder="Enter email"
+                                                            value={email}
                                                             onChange={(event) => setEmail(event.target.value)}
                                                         />
                                                     </div>
@@ -425,18 +459,19 @@ const Header = () => {
 
                                                 {/* Phone Number Field */}
                                                 <div>
-                                                    <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                                                    <label htmlFor="phoneNumber" className="block text-sm font-semibold text-slate-700 mb-1.5">
                                                         Phone Number
                                                     </label>
                                                     <div className="relative">
-                                                        <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
-                                                            <span className="text-gray-400 text-sm">📞</span>
+                                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                            <Phone className="h-4 w-4 text-teal-600" />
                                                         </div>
                                                         <input
                                                             type="tel"
                                                             id="phoneNumber"
-                                                            className="w-full pl-8 pr-2 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors bg-gray-50 focus:bg-white text-sm"
+                                                            className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm text-slate-900 shadow-inner transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-500/15"
                                                             placeholder="0123456789"
+                                                            value={phoneNumber}
                                                             onChange={(event) => setPhoneNumber(event.target.value)}
                                                         />
                                                     </div>
@@ -444,24 +479,24 @@ const Header = () => {
                                             </div>
 
                                             {/* Role and Password in 2 columns */}
-                                            <div className="grid grid-cols-2 gap-3">
+                                            <div className="grid gap-3 sm:grid-cols-2">
                                                 {/* Role Field */}
                                                 <div>
-                                                    <label htmlFor="role" className="block text-sm font-medium text-gray-700 mb-1">
+                                                    <label htmlFor="role" className="block text-sm font-semibold text-slate-700 mb-1.5">
                                                         Role
                                                     </label>
                                                     <div className="relative">
                                                         <select
                                                             id="role"
-                                                            className="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors bg-gray-50 focus:bg-white appearance-none cursor-pointer text-sm"
+                                                            className="h-11 w-full cursor-pointer appearance-none rounded-xl border border-slate-200 bg-slate-50 pl-3 pr-9 text-sm text-slate-900 shadow-inner transition-colors hover:border-slate-300 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-500/15"
                                                             value={role}
                                                             onChange={(event) => setRole(event.target.value)}
                                                         >
                                                             <option value="customer">Customer</option>
                                                             <option value="admin">Admin</option>
                                                         </select>
-                                                        <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
-                                                            <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                            <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                                             </svg>
                                                         </div>
@@ -470,24 +505,25 @@ const Header = () => {
 
                                                 {/* Password Field */}
                                                 <div>
-                                                    <label htmlFor="reg-password" className="block text-sm font-medium text-gray-700 mb-1">
+                                                    <label htmlFor="reg-password" className="block text-sm font-semibold text-slate-700 mb-1.5">
                                                         Password
                                                     </label>
                                                     <div className="relative">
-                                                        <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
-                                                            <Lock className="h-4 w-4 text-gray-400" />
+                                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                            <Lock className="h-4 w-4 text-teal-600" />
                                                         </div>
                                                         <input
                                                             type={showPassword ? "text" : "password"}
                                                             id="reg-password"
-                                                            className="w-full pl-8 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-colors bg-gray-50 focus:bg-white text-sm"
+                                                            className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-10 text-sm text-slate-900 shadow-inner transition-colors placeholder:text-slate-400 hover:border-slate-300 focus:border-teal-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-teal-500/15"
                                                             placeholder="Password"
+                                                            value={password}
                                                             onChange={(event) => setPassword(event.target.value)}
                                                         />
                                                         <button
                                                             type="button"
                                                             onClick={() => setShowPassword(!showPassword)}
-                                                            className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-gray-600"
+                                                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 transition-colors hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
                                                         >
                                                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                                         </button>
@@ -496,9 +532,9 @@ const Header = () => {
                                             </div>
 
                                             {/* Password Requirements - Compact 2 columns */}
-                                            <div className="bg-gray-50 rounded-lg p-2.5 border border-gray-200">
-                                                <p className="text-xs font-medium text-gray-600 mb-1.5">Password requirements:</p>
-                                                <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+                                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                                <p className="text-xs font-semibold text-slate-600 mb-2">Password requirements:</p>
+                                                <div className="grid gap-x-3 gap-y-1 sm:grid-cols-2">
                                                     {passwordRequirements.map((req, index) => {
                                                         const isValid = req.test(password);
                                                         return (
@@ -506,9 +542,9 @@ const Header = () => {
                                                                 {isValid ? (
                                                                     <Check className="h-3 w-3 text-green-500 flex-shrink-0" />
                                                                 ) : (
-                                                                    <X className="h-3 w-3 text-gray-300 flex-shrink-0" />
+                                                                    <X className="h-3 w-3 text-slate-300 flex-shrink-0" />
                                                                 )}
-                                                                <span className={`text-xs ${isValid ? 'text-green-600' : 'text-gray-500'}`}>
+                                                                <span className={`text-xs ${isValid ? 'text-green-600' : 'text-slate-500'}`}>
                                                                     {req.label}
                                                                 </span>
                                                             </div>
@@ -520,7 +556,7 @@ const Header = () => {
                                             <Button
                                                 type="submit"
                                                 disabled={loading}
-                                                className="w-full bg-teal-500 text-white hover:bg-teal-600 transition-all py-2 rounded-lg font-medium shadow-sm disabled:opacity-50"
+                                                className="h-11 w-full rounded-xl bg-gradient-to-r from-teal-600 to-cyan-600 text-white shadow-lg shadow-teal-600/20 transition-all hover:from-teal-700 hover:to-cyan-700 hover:shadow-xl hover:shadow-teal-600/25 focus-visible:ring-teal-600 disabled:opacity-50"
                                             >
                                                 {loading ? (
                                                     <span className="flex items-center justify-center gap-2">
@@ -534,6 +570,7 @@ const Header = () => {
                                             </Button>
                                         </form>
                                     )}
+                                    </div>
                                 </div>
                             </DialogContent>
                         </Dialog>
