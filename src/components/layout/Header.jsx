@@ -245,7 +245,7 @@ const Header = () => {
                     ) : (
                         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                             <DialogTrigger asChild>
-                                <Button className="bg-white/90 backdrop-blur-sm text-teal-700 hover:bg-white hover:scale-105 transition-all px-6 py-2.5 rounded-xl font-semibold shadow-lg hover:shadow-xl border border-white/50">
+                                <Button className="bg-white text-[#0F4C4C] hover:bg-amber-50 hover:text-[#0B3F3F] hover:scale-105 transition-all px-6 py-2.5 rounded-xl font-bold shadow-lg hover:shadow-xl border border-white focus-visible:ring-white">
                                     Login
                                 </Button>
                             </DialogTrigger>

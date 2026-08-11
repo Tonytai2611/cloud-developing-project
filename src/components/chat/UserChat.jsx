@@ -44,7 +44,7 @@ export default function UserChat({ userEmail }) {
                 const websocket = new WebSocket(`${WS_URL}?userId=${encodeURIComponent(userEmail)}&role=customer`);
 
                 websocket.onopen = () => {
-                    console.log('✅ User WebSocket connected for:', userEmail);
+                    console.log(' User WebSocket connected for:', userEmail);
                     setIsConnected(true);
 
                     // Load message history

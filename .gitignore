@@ -38,3 +38,4 @@ Thumbs.db
 *.tfstate.*
 
 Frontend_Architecture.md
+Terraform_Architecture.md
