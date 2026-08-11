@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { Mail, Phone, MapPin, Clock, Send, MessageCircle } from 'lucide-react';
+import { env } from '../config/env';
 
 export default function ContactUs() {
   const [formData, setFormData] = useState({
@@ -24,8 +25,7 @@ export default function ContactUs() {
     setLoading(true);
 
     try {
-      const apiUrl = 'https://okvnue9l2e.execute-api.us-east-1.amazonaws.com/production';
-      const response = await fetch(`${apiUrl}/contact`, {
+      const response = await fetch(`${env.apiBaseUrl}/contact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -61,8 +61,8 @@ export default function ContactUs() {
     {
       icon: Mail,
       label: 'Email',
-      value: 'contact@brewcraft.com',
-      href: 'mailto:contact@brewcraft.com'
+      value: env.contactEmail,
+      href: `mailto:${env.contactEmail}`
     },
     {
       icon: Phone,

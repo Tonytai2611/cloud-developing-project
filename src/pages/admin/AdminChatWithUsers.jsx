@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import AdminHeader from "../../components/layout/AdminHeader";
 import { useAuth } from '../../hooks/useAuth';
+import { env } from '../../config/env';
 
 // Helper for notifications
 const Notification = ({ message, onClose }) => (
@@ -43,7 +44,7 @@ const AdminChatWithUsers = () => {
   const [notification, setNotification] = useState(null);
 
   const messagesEndRef = useRef(null);
-  const WS_URL = "wss://4r17uij0de.execute-api.us-east-1.amazonaws.com/production";
+  const WS_URL = env.websocketUrl;
 
   // localStorage key for persisting conversations
   const STORAGE_KEY = 'admin_chat_conversations';
@@ -106,7 +107,7 @@ const AdminChatWithUsers = () => {
 
   // Connect WebSocket after adminEmail is loaded
   useEffect(() => {
-    if (!adminEmail) return; // Wait for admin email
+    if (!adminEmail || !WS_URL) return; // Wait for config and admin email
 
     const connectWebSocket = () => {
       try {

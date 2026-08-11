@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '../../hooks/useAuth';
+import { env } from '../../config/env';
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -65,7 +66,12 @@ export default function Admin() {
 
       console.log('Payload:', payload);
 
-      const response = await fetch('YOUR_API_ENDPOINT_HERE', {
+      if (!env.newsletterEndpoint) {
+        setMessage('Newsletter endpoint is not configured.');
+        return;
+      }
+
+      const response = await fetch(env.newsletterEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

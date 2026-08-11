@@ -1,8 +1,9 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from 'sonner';
+import { env } from '../../config/env';
 
-const API_BASE = 'https://okvnue9l2e.execute-api.us-east-1.amazonaws.com/production';
+const API_BASE = env.apiBaseUrl;
 
 function AdminHeader() {
     const navigate = useNavigate();

@@ -1,5 +1,7 @@
+import { env } from '../../../config/env';
+
 // Booking API Service
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://okvnue9l2e.execute-api.us-east-1.amazonaws.com/production';
+const API_BASE_URL = env.apiBaseUrl;
 
 export const bookingApi = {
     list: async (userId = null) => {

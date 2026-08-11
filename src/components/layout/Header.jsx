@@ -14,6 +14,7 @@ import AWS from 'aws-sdk';
 import CryptoJS from 'crypto-js';
 import { toast } from 'sonner';
 import { useAuth } from '../../hooks/useAuth';
+import { env } from '../../config/env';
 
 const Header = () => {
     const navigate = useNavigate();
@@ -106,11 +107,18 @@ const Header = () => {
             return;
         }
 
-        const clientId = "5fjijmj2a8q3n919rga3mhlnpi";
-        const clientSecret = "q8kaourmo7v4v34sgek9j9g4qa7703d5o28a0n92jl7ltbvpaf7";
-        const region = "us-east-1";
+        const clientId = env.cognitoClientId;
+        const clientSecret = env.cognitoClientSecret;
+        const region = env.awsRegion;
 
-        const secretHash = generateSecretHash(username, clientId, clientSecret);
+        if (!clientId || !region) {
+            toast.error("Auth config missing", {
+                description: "Please set REACT_APP_COGNITO_CLIENT_ID and REACT_APP_AWS_REGION"
+            });
+            return;
+        }
+
+        const secretHash = clientSecret ? generateSecretHash(username, clientId, clientSecret) : null;
 
         const cognito = new AWS.CognitoIdentityServiceProvider({ region });
 
@@ -121,7 +129,6 @@ const Header = () => {
 
         const params = {
             ClientId: clientId,
-            SecretHash: secretHash,
             Username: username,
             Password: password,
             UserAttributes: [
@@ -139,6 +146,7 @@ const Header = () => {
                 },
             ],
         };
+        if (secretHash) params.SecretHash = secretHash;
 
         try {
             const data = await cognito.signUp(params).promise();

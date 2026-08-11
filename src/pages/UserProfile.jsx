@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { User, Mail, Shield, Camera, Save, Trash2, Loader2 } from 'lucide-react';
 import imageCompression from 'browser-image-compression';
+import { env } from '../config/env';
 
 export default function UserProfile() {
   const [profile, setProfile] = useState(null);
@@ -14,7 +15,7 @@ export default function UserProfile() {
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
-  const API_URL = process.env.VITE_API_GATEWAY_URL || 'https://okvnue9l2e.execute-api.us-east-1.amazonaws.com/production';
+  const API_URL = env.apiBaseUrl;
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -170,11 +171,11 @@ export default function UserProfile() {
   const onDelete = async () => {
     if (!window.confirm('⚠️ Delete your profile? This will NOT delete your Cognito account. Continue?')) return;
     try {
-      const res = await fetch('/user', { method: 'DELETE' });
+      const res = await fetch(`${API_URL}/user`, { method: 'DELETE' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Delete failed');
       toast.success(data.message || 'Account deleted successfully');
-      await fetch('/logout', { method: 'POST' }).catch(() => { });
+      await fetch(`${API_URL}/logout`, { method: 'POST' }).catch(() => { });
       navigate('/');
       window.location.reload();
     } catch (e) {

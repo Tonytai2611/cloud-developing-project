@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { MessageCircle, Send, ArrowLeft, Home, Bell, Coffee, Sparkles } from "lucide-react";
 import { useAuth } from '../hooks/useAuth';
+import { env } from '../config/env';
 
 // Helper for notifications
 const Notification = ({ message, onClose }) => (
@@ -29,7 +30,7 @@ const UserChatPage = () => {
     const [userEmail, setUserEmail] = useState(null); // Dynamic user email from cookie
 
     const messagesEndRef = useRef(null);
-    const WS_URL = "wss://4r17uij0de.execute-api.us-east-1.amazonaws.com/production";
+    const WS_URL = env.websocketUrl;
 
     // Format timestamp to local Vietnam time
     const formatTimestamp = (timestamp) => {
@@ -77,7 +78,7 @@ const UserChatPage = () => {
 
     // Connect to WebSocket when chat opens AND user is loaded
     useEffect(() => {
-        if (!userEmail) return; // Wait for user email to be fetched
+        if (!userEmail || !WS_URL) return; // Wait for config and user email
 
         // Close existing connection if any
         if (ws) {

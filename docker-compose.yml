@@ -4,20 +4,43 @@ services:
       context: .
       dockerfile: Dockerfile.api
     environment:
-      AWS_REGION: "us-east-1"
-      AWS_ACCESS_KEY_ID: ""
-      AWS_SECRET_ACCESS_KEY: ""
-      AWS_SESSION_TOKEN: ""
-      COGNITO_CLIENT_ID: ""
-      COGNITO_CLIENT_SECRET: ""
-      COGNITO_USER_POOL_ID: ""
-      USERS_TABLE: ""
+      PORT: "3001"
+      NODE_ENV: "production"
+      AWS_REGION: "${AWS_REGION:-us-east-1}"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID:-}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY:-}"
+      AWS_SESSION_TOKEN: "${AWS_SESSION_TOKEN:-}"
+      COGNITO_CLIENT_ID: "${COGNITO_CLIENT_ID:-}"
+      COGNITO_CLIENT_SECRET: "${COGNITO_CLIENT_SECRET:-}"
+      COGNITO_USER_POOL_ID: "${COGNITO_USER_POOL_ID:-}"
+      USERS_TABLE: "${USERS_TABLE:-}"
+      CONTACT_HANDLER_FUNCTION_NAME: "${CONTACT_HANDLER_FUNCTION_NAME:-}"
+      UPLOAD_IMAGE_FUNCTION_NAME: "${UPLOAD_IMAGE_FUNCTION_NAME:-}"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "const port = process.env.PORT || 3001; fetch('http://127.0.0.1:' + port + '/health').then((res) => process.exit(res.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   web:
     build:
       context: .
       dockerfile: dockerfile
+      args:
+        REACT_APP_API_BASE_URL: "${REACT_APP_API_BASE_URL:-}"
+        REACT_APP_WEBSOCKET_URL: "${REACT_APP_WEBSOCKET_URL:-}"
+        REACT_APP_AWS_REGION: "${REACT_APP_AWS_REGION:-us-east-1}"
+        REACT_APP_COGNITO_USER_POOL_ID: "${REACT_APP_COGNITO_USER_POOL_ID:-}"
+        REACT_APP_COGNITO_CLIENT_ID: "${REACT_APP_COGNITO_CLIENT_ID:-}"
+        REACT_APP_COGNITO_CLIENT_SECRET: "${REACT_APP_COGNITO_CLIENT_SECRET:-}"
+        REACT_APP_DEFAULT_ADMIN_EMAIL: "${REACT_APP_DEFAULT_ADMIN_EMAIL:-}"
+        REACT_APP_NEWSLETTER_ENDPOINT: "${REACT_APP_NEWSLETTER_ENDPOINT:-}"
+        REACT_APP_CONTACT_EMAIL: "${REACT_APP_CONTACT_EMAIL:-contact@brewcraft.com}"
+    environment:
+      API_UPSTREAM_HOST: "${API_UPSTREAM_HOST:-api}"
+      API_UPSTREAM_PORT: "${API_UPSTREAM_PORT:-3001}"
     ports:
       - "80:80"
     depends_on:

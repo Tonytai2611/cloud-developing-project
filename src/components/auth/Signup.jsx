@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Eye, EyeOff, Mail, Lock, User, Coffee, Check, X, UserCircle } from 'lucide-react';
+import { env } from '../../config/env';
 
 export default function Signup() {
   const [name, setName] = useState('');
@@ -27,7 +28,7 @@ export default function Signup() {
     setError(null);
     setLoading(true);
     try {
-      const res = await fetch('/register', {
+      const res = await fetch(`${env.apiBaseUrl}/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: email, password, email, name, role })

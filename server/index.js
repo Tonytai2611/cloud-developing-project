@@ -1,28 +1,21 @@
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const AWS = require('aws-sdk');
 const crypto = require('crypto');
+const { serialize, parse } = require('cookie');
+const { cognito, dynamodb } = require('./config/aws');
+const { env, warnMissingRuntimeConfig } = require('./config/env');
+const { invokeJsonLambda } = require('./services/lambdaInvoker.service');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORT = process.env.PORT || 3001;
+warnMissingRuntimeConfig();
 
-AWS.config.update({
-  region: process.env.AWS_REGION || 'us-east-1',
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  sessionToken: process.env.AWS_SESSION_TOKEN
-});
-
-const cognito = new AWS.CognitoIdentityServiceProvider();
-const { serialize, parse } = require('cookie');
-const dynamodb = new AWS.DynamoDB.DocumentClient();
-const CLIENT_ID = process.env.COGNITO_CLIENT_ID;
-const CLIENT_SECRET = process.env.COGNITO_CLIENT_SECRET;
-const USERS_TABLE = process.env.USERS_TABLE || process.env.REACT_APP_USERS_TABLE;
+const PORT = env.port;
+const CLIENT_ID = env.cognitoClientId;
+const CLIENT_SECRET = env.cognitoClientSecret;
+const USERS_TABLE = env.usersTable;
 
 function generateSecretHash(username) {
   if (!CLIENT_SECRET) return undefined;
@@ -60,19 +53,24 @@ app.post('/register', async (req, res) => {
   }
 });
 
-// health
 app.get('/health', (req, res) => {
-  res.json({ ok: true, table: USERS_TABLE || null, region: AWS.config.region || process.env.AWS_REGION });
+  res.status(200).json({
+    status: 'ok',
+    service: 'brewcraft-api',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // confirm: confirm code then write to DynamoDB
 app.post('/confirm', async (req, res) => {
-  // Accept optional email/name/role from client to avoid relying on adminGetUser
-  let { username, code, email, name, role } = req.body || {};
-  if (!username || !code) return res.status(400).json({ error: 'username and code required' });
+  // Accept optional email/name/role from client to avoid relying on adminGetUser.
+  let { username, code, verificationCode, email, name, role } = req.body || {};
+  const confirmationCode = code || verificationCode;
+  if (!username || !confirmationCode) return res.status(400).json({ error: 'username and confirmation code required' });
 
   try {
-    const params = { ClientId: CLIENT_ID, Username: username, ConfirmationCode: code };
+    const params = { ClientId: CLIENT_ID, Username: username, ConfirmationCode: confirmationCode };
     const secretHash = generateSecretHash(username);
     if (secretHash) params.SecretHash = secretHash;
 
@@ -80,9 +78,9 @@ app.post('/confirm', async (req, res) => {
     console.log(`User ${username} confirmed in Cognito`);
 
     // If client didn't send email/name, try adminGetUser as a fallback
-    if ((!email || !name) && process.env.COGNITO_USER_POOL_ID) {
+    if ((!email || !name) && env.cognitoUserPoolId) {
       try {
-        const adminResp = await cognito.adminGetUser({ UserPoolId: process.env.COGNITO_USER_POOL_ID, Username: username }).promise();
+        const adminResp = await cognito.adminGetUser({ UserPoolId: env.cognitoUserPoolId, Username: username }).promise();
         const attrs = adminResp.UserAttributes || [];
         if (!email) email = attrs.find(a => a.Name === 'email')?.Value || null;
         if (!name) name = attrs.find(a => a.Name === 'name')?.Value || null;
@@ -113,10 +111,10 @@ app.post('/confirm', async (req, res) => {
       console.log('DynamoDB put succeeded for', username);
 
       // If role is 'admin', add user to Cognito 'admin' group
-      if (role === 'admin' && process.env.COGNITO_USER_POOL_ID) {
+      if (role === 'admin' && env.cognitoUserPoolId) {
         try {
           await cognito.adminAddUserToGroup({
-            UserPoolId: process.env.COGNITO_USER_POOL_ID,
+            UserPoolId: env.cognitoUserPoolId,
             Username: normalizedUsername,
             GroupName: 'admin'
           }).promise();
@@ -184,7 +182,7 @@ app.post('/login', async (req, res) => {
       res.setHeader('Set-Cookie', [
         serialize('userInfo', JSON.stringify(userInfo), {
           sameSite: 'strict',
-          secure: false,
+          secure: env.nodeEnv === 'production',
           path: '/',
           maxAge: 60 * 60 * 24,
         }),
@@ -219,38 +217,12 @@ app.get('/me', (req, res) => {
   }
 });
 
-
-// CloudSample: confirmUser (alias of /api/confirm but kept lightweight)
-app.post('/confirm', async (req, res) => {
-  if (!req.body || req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
-  const { username, verificationCode } = req.body;
-  if (!username || !verificationCode) return res.status(400).json({ message: 'Missing username or verification code' });
-
-  try {
-    const params = {
-      ClientId: CLIENT_ID,
-      ConfirmationCode: verificationCode,
-      Username: username,
-    };
-    const secretHash = generateSecretHash(username);
-    if (secretHash) params.SecretHash = secretHash;
-
-    const result = await cognito.confirmSignUp(params).promise();
-    return res.status(200).json({ message: 'User confirmed successfully', result });
-  } catch (err) {
-    console.error('confirmUser error:', err);
-    return res.status(400).json({ message: err.message || 'Confirm failed' });
-  }
-});
-
-// Duplicate /me route removed - using the one at line 204
-
 // Logout - clear cookies
 app.post('/logout', (req, res) => {
   res.setHeader('Set-Cookie', [
     serialize('userInfo', '', {
       httpOnly: false,
-      secure: process.env.NODE_ENV === 'production',
+      secure: env.nodeEnv === 'production',
       sameSite: 'strict',
       path: '/',
       maxAge: 0,
@@ -357,23 +329,12 @@ app.post('/contact', async (req, res) => {
   }
 
   try {
-    const lambda = new AWS.Lambda();
-    const payload = {
-      body: JSON.stringify({ name, email, message })
-    };
-
-    const result = await lambda.invoke({
-      FunctionName: 'ContactHandler', // Your Lambda function name in AWS
-      InvocationType: 'RequestResponse',
-      Payload: JSON.stringify(payload)
-    }).promise();
-
-    const response = JSON.parse(result.Payload);
+    const response = await invokeJsonLambda(env.contactHandlerFunctionName, { name, email, message });
 
     if (response.statusCode === 200) {
-      return res.json(JSON.parse(response.body));
+      return res.json(response.body);
     } else {
-      return res.status(response.statusCode).json(JSON.parse(response.body));
+      return res.status(response.statusCode).json(response.body);
     }
   } catch (error) {
     console.error('Contact API error:', error);
@@ -389,23 +350,12 @@ app.post('/upload', async (req, res) => {
   }
 
   try {
-    const lambda = new AWS.Lambda();
-    const payload = {
-      body: JSON.stringify({ file, fileName })
-    };
-
-    const result = await lambda.invoke({
-      FunctionName: 'UploadImageHandler',
-      InvocationType: 'RequestResponse',
-      Payload: JSON.stringify(payload)
-    }).promise();
-
-    const response = JSON.parse(result.Payload);
+    const response = await invokeJsonLambda(env.uploadImageFunctionName, { file, fileName });
 
     if (response.statusCode === 200) {
-      return res.json(JSON.parse(response.body));
+      return res.json(response.body);
     } else {
-      return res.status(response.statusCode).json(JSON.parse(response.body));
+      return res.status(response.statusCode).json(response.body);
     }
   } catch (error) {
     console.error('Upload API error:', error);
@@ -413,4 +363,17 @@ app.post('/upload', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`✅ Express Server is running on http://localhost:${PORT}`));
+const server = app.listen(PORT, () => {
+  console.log(`Express server is running on port ${PORT}`);
+});
+
+function shutdown(signal) {
+  console.log(`${signal} received. Closing HTTP server...`);
+  server.close(() => {
+    console.log('HTTP server closed.');
+    process.exit(0);
+  });
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, X, Send, Coffee, Sparkles } from 'lucide-react';
+import { env } from '../../config/env';
 
-// WebSocket API Gateway URL
-const WS_URL = 'wss://4r17uij0de.execute-api.us-east-1.amazonaws.com/production';
+const WS_URL = env.websocketUrl;
 
 export default function UserChat({ userEmail }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -12,7 +12,7 @@ export default function UserChat({ userEmail }) {
     const [isConnected, setIsConnected] = useState(false);
 
     const messagesEndRef = useRef(null);
-    const adminEmail = 'tonytai2611@gmail.com'; // Fixed admin email
+    const adminEmail = env.defaultAdminEmail;
     const prevUserEmailRef = useRef(userEmail);
 
     // Clear messages when user changes
@@ -31,6 +31,10 @@ export default function UserChat({ userEmail }) {
     // Connect to WebSocket when chat opens
     useEffect(() => {
         if (!isOpen || !userEmail) return;
+        if (!WS_URL || !adminEmail) {
+            console.warn('WebSocket chat is not configured.');
+            return;
+        }
 
         // Close existing connection and clear messages for fresh start
         if (ws) {

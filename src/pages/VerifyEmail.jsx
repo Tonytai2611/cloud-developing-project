@@ -2,19 +2,13 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Mail, ArrowLeft, RefreshCw } from 'lucide-react';
-import AWS from 'aws-sdk';
-import CryptoJS from 'crypto-js';
+import { env } from '../config/env';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-// Configuration from Header.jsx (kept for reference if needed, but we use API now)
-// const clientId = "5fjijmj2a8q3n919rga3mhlnpi";
-// const clientSecret = "q8kaourmo7v4v34sgek9j9g4qa7703d5o28a0n92jl7ltbvpaf7";
-// const region = "us-east-1";
-
-const API_URL = process.env.VITE_API_GATEWAY_URL || 'https://okvnue9l2e.execute-api.us-east-1.amazonaws.com/production';
+const API_URL = env.apiBaseUrl;
 
 export default function VerifyEmail() {
   const query = useQuery();
