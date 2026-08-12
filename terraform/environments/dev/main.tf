@@ -20,3 +20,14 @@ module "vpc" {
   }
   tags = local.common_tags
 }
+
+module "security_groups" {
+  source = "../../modules/security-groups"
+
+  project_name = var.project_name
+  environment  = var.environment
+  vpc_id       = module.vpc.vpc-id
+  app_port     = 3001
+
+  tags = local.common_tags
+}
