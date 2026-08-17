@@ -14,35 +14,48 @@ A comprehensive cloud-based restaurant and cafe management system built with Rea
 
 ## 🏗️ System Architecture
 
-BrewCraft follows a modern serverless architecture on AWS:
+BrewCraft is being refactored toward a cost-optimized AWS architecture for the dev environment. The core synchronous API runs on Express inside ECS Fargate behind an Application Load Balancer, while event-driven jobs can be handled separately with Lambda-based workflows.
 
-![BrewCraft AWS Architecture](./architecture-diagram.png)
+![BrewCraft AWS cost-optimized architecture](docs/architecture/brewcraft-aws-cost-optimized.png)
+
+Editable diagram source:
+
+- [BrewCraft AWS cost-optimized diagram](docs/architecture/brewcraft-aws-cost-optimized.drawio)
 
 ### Architecture Components
 
 1. **Frontend Layer**
-   - React 18.2.0 Single Page Application
+   - React 18.2.0 single page application
    - Responsive UI with Tailwind CSS
    - Client-side routing with React Router
-   - Deployed in Docker containers on EC2
+   - Container image stored in Amazon ECR when deployed through ECS
 
-2. **Authentication Layer**
+2. **Core API Layer**
+   - Express backend for booking CRUD, menu CRUD, profile, and admin APIs
+   - Containerized service running on ECS Fargate
+   - Application Load Balancer forwards traffic to the backend target group
+   - `/health` endpoint used by ALB health checks
+
+3. **Authentication Layer**
    - AWS Cognito for user management
    - JWT-based authentication
-   - Role-based access control (Customer/Admin)
+   - Role-based access control for customer and admin users
 
-3. **API Layer**
-   - AWS API Gateway for RESTful endpoints
-   - AWS Lambda for serverless business logic
-   - WebSocket support for real-time chat
+4. **Data and Storage Layer**
+   - DynamoDB for users, bookings, menu data, and chat messages
+   - S3 for uploaded images and static/failover assets
 
-4. **Data Layer**
-   - AWS DynamoDB for NoSQL storage
-   - Tables: Users, Bookings, Menu, Chat Messages
+5. **Event-Driven Layer**
+   - SQS for asynchronous jobs
+   - Lambda for notifications, image processing, reminders, and queue workers
+   - SNS for notification delivery
+   - Step Functions for workflows that need orchestration
 
-5. **Load Balancing**
-   - Application Load Balancer for high availability
-   - Auto-scaling and health checks
+6. **Platform Layer**
+   - ECR for backend and frontend images
+   - CloudWatch for logs, metrics, and alarms
+   - IAM/OIDC for GitHub Actions deployment access
+   - Dev environment avoids NAT Gateway to reduce cost
 
 ## ✨ Core Features
 
@@ -211,8 +224,41 @@ npm run build
 
 The optimized production build will be created in the `build/` folder.
 
+## Terraform Infrastructure
 
-## Cloud Formation Stack
+The Terraform work-in-progress lives under `terraform/` and follows a reusable module structure:
+
+```text
+terraform/
+  environments/
+    dev/
+  modules/
+    vpc/
+    security-groups/
+    ecr/
+    alb/
+```
+
+Current dev foundation:
+
+- VPC with two public subnets and Internet Gateway
+- Security groups for ALB and ECS tasks
+- ECR repositories for backend and frontend images
+- Application Load Balancer with HTTP listener and backend target group
+
+Validate the dev stack:
+
+```powershell
+cd terraform/environments/dev
+terraform fmt -recursive
+terraform validate
+terraform plan
+```
+
+Next planned module:
+
+- ECS Fargate service for the Express backend API
+
 ## CloudFormation Stack
 
 Deploy the DynamoDB infrastructure:
@@ -230,7 +276,6 @@ aws cloudformation create-stack \
 See [Dynamo/README.md](Dynamo/README.md) for complete infrastructure documentation and [Dynamo/docs/DEPLOYMENT-GUIDE.md](Dynamo/docs/DEPLOYMENT-GUIDE.md) for detailed deployment instructions.
 
 ## Linting & Formatting
->>>>>>> ac07259ff2e5459c22bda1fec9ce44b9462d82a0
 
 ### Build Docker Image
 
