@@ -1,19 +1,19 @@
 locals {
-    name_prefix = "${var.project_name}-${var.environment}"
+  name_prefix = "${var.project_name}-${var.environment}"
 }
 
 resource "aws_security_group" "alb" {
-    name        = "${local.name_prefix}-sg"
-    description = "Security group for ${var.project_name} in ${var.environment} environment"
-    vpc_id      = var.vpc_id
+  name        = "${local.name_prefix}-sg"
+  description = "Security group for ${var.project_name} in ${var.environment} environment"
+  vpc_id      = var.vpc_id
 
-    tags = merge(
-        var.tags,
-        {
-            Name        = "${local.name_prefix}-alb-sg"
-            Environment = var.environment
-        }
-    )
+  tags = merge(
+    var.tags,
+    {
+      Name        = "${local.name_prefix}-alb-sg"
+      Environment = var.environment
+    }
+  )
 }
 
 resource "aws_vpc_security_group_ingress_rule" "alb_http" {

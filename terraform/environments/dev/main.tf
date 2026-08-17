@@ -31,3 +31,29 @@ module "security_groups" {
 
   tags = local.common_tags
 }
+
+module "ecr" {
+  source = "../../modules/ecr"
+
+  project_name     = var.project_name
+  environment      = var.environment
+  repository_names = ["backend", "frontend"]
+  tags             = local.common_tags
+}
+
+
+module "alb" {
+  source = "../../modules/alb"
+
+  project_name = var.project_name
+  environment  = var.environment
+  vpc_id       = module.vpc.vpc-id
+  public_subnet_ids = [
+    module.vpc.public-subnet-ids[0],
+    module.vpc.public-subnet-ids[1]
+  ]
+  alb_security_group_id = module.security_groups.alb_security_group_id
+  app_port              = 3001
+  health_check_path     = "/health"
+  tags                  = local.common_tags
+}
