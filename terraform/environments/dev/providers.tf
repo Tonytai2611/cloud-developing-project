@@ -4,7 +4,7 @@ provider "aws" {
   default_tags {
     tags = {
       Project     = "brewcraft"
-      Environment = "var.environment"
+      Environment = var.environment
       ManagedBy   = "Terraform"
     }
   }

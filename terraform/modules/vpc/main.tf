@@ -31,7 +31,7 @@ resource "aws_internet_gateway" "this" {
 
 
 resource "aws_subnet" "public" {
-  for_each = var.public_subnet_cidrs
+  for_each                = var.public_subnet_cidrs
   availability_zone       = each.key
   cidr_block              = each.value
   map_public_ip_on_launch = true

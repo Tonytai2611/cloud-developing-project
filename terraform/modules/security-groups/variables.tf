@@ -12,21 +12,20 @@ variable "environment" {
 }
 
 
-variable "vpc_cidr" {
-  description = "The CIDR block for the VPC"
+variable "vpc_id" {
+  description = "The ID of the VPC where the security groups will be created"
   type        = string
   nullable    = false
 }
 
-variable "public_subnet_cidrs" {
-  description = "List of CIDR blocks for public subnets"
-  type        = map(string)
+
+variable "app_port" {
+  description = "The port number for the application (e.g., 80 for HTTP, 443 for HTTPS)"
+  type        = number
+  default     = 30002
   nullable    = false
-  validation {
-    condition     = length(var.public_subnet_cidrs) >= 2
-    error_message = "At least two public subnets are required."
-  }
 }
+
 
 variable "tags" {
   description = "A map of tags to assign to resources"
