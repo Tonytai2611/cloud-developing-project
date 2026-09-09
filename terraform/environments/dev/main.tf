@@ -6,6 +6,8 @@ locals {
   }
 }
 
+data "aws_caller_identity" "current" {}
+
 
 module "vpc" {
   source = "../../modules/vpc"
@@ -58,6 +60,14 @@ module "alb" {
   tags                  = local.common_tags
 }
 
+module "dynamodb" {
+  source = "../../modules/dynamodb"
+
+  project_name                  = var.project_name
+  environment                   = var.environment
+  enable_point_in_time_recovery = true
+  tags                          = local.common_tags
+}
 
 module "ecs" {
   source                = "../../modules/ecs"
@@ -70,7 +80,18 @@ module "ecs" {
   container_name        = "backend"
   container_image       = "${module.ecr.repository_urls["backend"]}:latest"
   container_port        = 3001
+  environment_variables = {
+    AWS_REGION           = var.aws_region
+    COGNITO_CLIENT_ID    = var.cognito_client_id
+    COGNITO_USER_POOL_ID = var.cognito_user_pool_id
+    NODE_ENV             = "production"
+    PORT                 = "3001"
+    USERS_TABLE          = module.dynamodb.users_table_name
+  }
+  users_table_arn       = module.dynamodb.users_table_arn
+  cognito_user_pool_arn = "arn:aws:cognito-idp:${var.aws_region}:${data.aws_caller_identity.current.account_id}:userpool/${var.cognito_user_pool_id}"
   desired_count         = 1
   assign_public_ip      = true
   tags                  = local.common_tags
 }
+

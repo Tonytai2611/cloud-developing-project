@@ -22,3 +22,17 @@ variable "vpc_cidr" {
   type        = string
   default     = "10.0.0.0/16"
 }
+
+variable "cognito_user_pool_id" {
+  description = "Cognito user pool ID used by the backend runtime."
+  type        = string
+  default     = "us-east-1_5S0LcmBl2"
+  nullable    = false
+}
+
+variable "cognito_client_id" {
+  description = "Cognito app client ID used by the backend runtime."
+  type        = string
+  default     = "3b86tra521331e2dlqg2dmbekr"
+  nullable    = false
+}
