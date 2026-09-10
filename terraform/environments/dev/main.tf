@@ -86,13 +86,21 @@ module "ecs" {
     COGNITO_USER_POOL_ID = var.cognito_user_pool_id
     NODE_ENV             = "production"
     PORT                 = "3001"
+    IMAGE_BUCKET         = module.image_bucket.image_bucket_name
+    MENU_TABLE           = module.dynamodb.menu_table_name
+    TABLES_TABLE         = module.dynamodb.tables_table_name
     USERS_TABLE          = module.dynamodb.users_table_name
   }
 
-  cpu                   = 256
-  memory                = 512
-  users_table_arn       = module.dynamodb.users_table_arn
+  cpu             = 256
+  memory          = 512
+  users_table_arn = module.dynamodb.users_table_arn
+  additional_dynamodb_table_arns = [
+    module.dynamodb.menu_table_arn,
+    module.dynamodb.tables_table_arn
+  ]
   cognito_user_pool_arn = "arn:aws:cognito-idp:${var.aws_region}:${data.aws_caller_identity.current.account_id}:userpool/${var.cognito_user_pool_id}"
+  image_bucket_arn      = module.image_bucket.image_bucket_arn
   desired_count         = 1
   assign_public_ip      = true
   tags                  = local.common_tags
@@ -101,10 +109,37 @@ module "ecs" {
 module "frontend_hosting" {
   source = "../../modules/frontend-hosting"
 
-  project_name = var.project_name
-  environment  = var.environment
-  account_id   = data.aws_caller_identity.current.account_id
-  tags         = local.common_tags
+  project_name           = var.project_name
+  environment            = var.environment
+  account_id             = data.aws_caller_identity.current.account_id
+  api_origin_domain_name = module.alb.alb_dns_name
+  api_path_patterns = [
+    "/register",
+    "/login",
+    "/logout",
+    "/me",
+    "/user",
+    "/confirm",
+    "/confirmUser",
+    "/verify-email",
+    "/contact",
+    "/upload",
+    "/images/*",
+    "/health",
+    "/createBooking",
+    "/updateBooking",
+    "/deleteBooking",
+    "/getBooking",
+    "/createTable",
+    "/updateTable",
+    "/deleteTable",
+    "/getTable",
+    "/createMenuItem",
+    "/updateMenuItem",
+    "/deleteMenuItem",
+    "/getMenu"
+  ]
+  tags = local.common_tags
 }
 
 module "image_bucket" {

@@ -87,7 +87,7 @@ resource "aws_iam_role_policy" "task_runtime" {
           "dynamodb:Query",
           "dynamodb:Scan"
         ]
-        Resource = var.users_table_arn
+        Resource = concat([var.users_table_arn], var.additional_dynamodb_table_arns)
       },
       {
         Effect = "Allow"
@@ -96,6 +96,14 @@ resource "aws_iam_role_policy" "task_runtime" {
           "cognito-idp:AdminAddUserToGroup"
         ]
         Resource = var.cognito_user_pool_arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject"
+        ]
+        Resource = "${var.image_bucket_arn}/*"
       }
     ]
   })

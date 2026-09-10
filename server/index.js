@@ -199,10 +199,13 @@ app.post('/login', async (req, res) => {
         let isAdmin = false;
         if (Array.isArray(groups)) isAdmin = groups.includes('admin');
         if (typeof groups === 'string') isAdmin = groups.split(',').includes('admin');
+        const email = decoded.email || null;
         userInfo = {
-          username: decoded['cognito:username'] || username,
-          email: decoded.email || null,
+          username: email || username,
+          cognitoUsername: decoded['cognito:username'] || null,
+          email,
           name: decoded.name || null,
+          role: isAdmin ? 'admin' : 'customer',
           isAdmin: isAdmin || false
         };
       } catch (e) {

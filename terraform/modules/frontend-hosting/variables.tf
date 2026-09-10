@@ -19,3 +19,15 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "api_origin_domain_name" {
+  description = "Optional ALB DNS name used as the API origin behind CloudFront."
+  type        = string
+  default     = null
+}
+
+variable "api_path_patterns" {
+  description = "API path patterns that CloudFront should route to the API origin."
+  type        = list(string)
+  default     = []
+}

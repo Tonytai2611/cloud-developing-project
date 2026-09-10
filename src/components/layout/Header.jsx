@@ -19,6 +19,7 @@ import { env } from '../../config/env';
 const Header = () => {
     const navigate = useNavigate();
     const { user, login: authLogin, logout: authLogout } = useAuth();
+    const userDisplayName = user?.name || user?.email || user?.username || 'Account';
     const cafeHeroImage = `${process.env.PUBLIC_URL}/cafe.jpg`;
     const [activeTab, setActiveTab] = useState("login");
     const [username, setUsername] = useState('');
@@ -241,7 +242,7 @@ const Header = () => {
                                     className="font-semibold text-white hover:text-yellow-200 cursor-pointer transition-colors flex items-center gap-1.5"
                                 >
                                     <UserCircle className="w-4 h-4" />
-                                    {user.username}
+                                    <span className="max-w-48 truncate">{userDisplayName}</span>
                                 </div>
                             </div>
                             <Button

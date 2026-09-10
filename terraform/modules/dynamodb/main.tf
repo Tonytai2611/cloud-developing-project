@@ -29,3 +29,59 @@ resource "aws_dynamodb_table" "users" {
     }
   )
 }
+
+resource "aws_dynamodb_table" "menu" {
+  name         = "${local.name_prefix}-menu"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "id"
+
+  attribute {
+    name = "id"
+    type = "S"
+  }
+
+  server_side_encryption {
+    enabled = true
+  }
+
+  point_in_time_recovery {
+    enabled = var.enable_point_in_time_recovery
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      "Name"        = "${local.name_prefix}-menu"
+      "Project"     = var.project_name
+      "Environment" = var.environment
+    }
+  )
+}
+
+resource "aws_dynamodb_table" "tables" {
+  name         = "${local.name_prefix}-tables"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "id"
+
+  attribute {
+    name = "id"
+    type = "S"
+  }
+
+  server_side_encryption {
+    enabled = true
+  }
+
+  point_in_time_recovery {
+    enabled = var.enable_point_in_time_recovery
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      "Name"        = "${local.name_prefix}-tables"
+      "Project"     = var.project_name
+      "Environment" = var.environment
+    }
+  )
+}
