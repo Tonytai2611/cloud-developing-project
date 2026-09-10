@@ -118,7 +118,8 @@ const Header = () => {
             return;
         }
 
-        const secretHash = clientSecret ? generateSecretHash(username, clientId, clientSecret) : null;
+        const cognitoUsername = email.trim().toLowerCase();
+        const secretHash = clientSecret ? generateSecretHash(cognitoUsername, clientId, clientSecret) : null;
 
         const cognito = new AWS.CognitoIdentityServiceProvider({ region });
 
@@ -129,12 +130,12 @@ const Header = () => {
 
         const params = {
             ClientId: clientId,
-            Username: username,
+            Username: cognitoUsername,
             Password: password,
             UserAttributes: [
                 {
                     Name: "email",
-                    Value: email,
+                    Value: cognitoUsername,
                 },
                 {
                     Name: "name",
@@ -156,8 +157,8 @@ const Header = () => {
             });
 
             // persist registration info so verify page can include email/name/role
-            localStorage.setItem('username', username);
-            localStorage.setItem('email', email);
+            localStorage.setItem('username', cognitoUsername);
+            localStorage.setItem('email', cognitoUsername);
             localStorage.setItem('name', name);
             localStorage.setItem('role', role); // Save role to localStorage
 
