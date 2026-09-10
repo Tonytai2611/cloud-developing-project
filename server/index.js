@@ -2,13 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const crypto = require('crypto');
 const { serialize, parse } = require('cookie');
-const { cognito, dynamodb } = require('./config/aws');
+const { cognito, dynamodb, s3 } = require('./config/aws');
 const { env, warnMissingRuntimeConfig } = require('./config/env');
 const { invokeJsonLambda } = require('./services/lambdaInvoker.service');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '12mb' }));
 
 warnMissingRuntimeConfig();
 
@@ -18,6 +18,7 @@ const CLIENT_SECRET = env.cognitoClientSecret;
 const USERS_TABLE = env.usersTable;
 const MENU_TABLE = env.menuTable;
 const TABLES_TABLE = env.tablesTable;
+const IMAGE_BUCKET = env.imageBucket;
 
 function getConfiguredTable(tableName, res, label) {
   if (!tableName) {
@@ -569,18 +570,59 @@ app.post('/upload', async (req, res) => {
   if (!file || !fileName) {
     return res.status(400).json({ error: 'Missing file or fileName' });
   }
+  if (!IMAGE_BUCKET) {
+    return res.status(500).json({ error: 'Server misconfiguration: IMAGE_BUCKET missing' });
+  }
 
   try {
-    const response = await invokeJsonLambda(env.uploadImageFunctionName, { file, fileName });
+    const safeFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const key = `menu/${safeFileName}`;
+    const body = Buffer.from(file, 'base64');
+    const extension = safeFileName.split('.').pop()?.toLowerCase();
+    const contentTypes = {
+      gif: 'image/gif',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      webp: 'image/webp',
+    };
 
-    if (response.statusCode === 200) {
-      return res.json(response.body);
-    } else {
-      return res.status(response.statusCode).json(response.body);
-    }
+    await s3.putObject({
+      Bucket: IMAGE_BUCKET,
+      Key: key,
+      Body: body,
+      ContentType: contentTypes[extension] || 'application/octet-stream',
+    }).promise();
+
+    return res.json({
+      message: 'File uploaded successfully!',
+      url: `/images/${encodeURIComponent(key)}`,
+      fileName: safeFileName,
+    });
   } catch (error) {
     console.error('Upload API error:', error);
     return res.status(500).json({ error: 'Failed to upload image', detail: error.message });
+  }
+});
+
+app.get('/images/:key(*)', async (req, res) => {
+  if (!IMAGE_BUCKET) {
+    return res.status(500).json({ error: 'Server misconfiguration: IMAGE_BUCKET missing' });
+  }
+
+  try {
+    const key = decodeURIComponent(req.params.key);
+    const response = await s3.getObject({ Bucket: IMAGE_BUCKET, Key: key }).promise();
+
+    res.setHeader('Content-Type', response.ContentType || 'application/octet-stream');
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    return res.send(response.Body);
+  } catch (error) {
+    console.error('GET /images error:', error);
+    return res.status(error.code === 'NoSuchKey' ? 404 : 500).json({
+      error: 'Failed to read image',
+      detail: error.message,
+    });
   }
 });
 
