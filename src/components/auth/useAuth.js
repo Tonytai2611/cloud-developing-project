@@ -46,16 +46,22 @@ export const AuthProvider = ({ children }) => {
 
       const data = await response.json();
 
+      const userInfo = data.userInfo || {
+        username,
+        isAdmin: !!data.isAdmin,
+        role: data.isAdmin ? 'admin' : 'customer',
+      };
+
       // Save tokens to localStorage
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('idToken', data.idToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
+      if (data.accessToken) localStorage.setItem('accessToken', data.accessToken);
+      if (data.idToken) localStorage.setItem('idToken', data.idToken);
+      if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
 
       // Update state
-      setAccessToken(data.accessToken);
-      setUser(data.userInfo);
+      setAccessToken(data.accessToken || null);
+      setUser(userInfo);
 
-      return data;
+      return { ...data, userInfo };
     } catch (error) {
       console.error('Login error:', error);
       throw error;

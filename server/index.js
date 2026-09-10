@@ -223,7 +223,14 @@ app.post('/login', async (req, res) => {
       console.warn('Failed to set cookie:', e.message || e);
     }
 
-    res.json({ message: 'Login successful', isAdmin: userInfo.isAdmin });
+    res.json({
+      message: 'Login successful',
+      accessToken: auth.AccessToken,
+      idToken: auth.IdToken,
+      refreshToken: auth.RefreshToken,
+      userInfo,
+      isAdmin: userInfo.isAdmin,
+    });
   } catch (error) {
     console.error('Login Error:', error);
     res.status(401).json({ error: 'Invalid username or password' });
