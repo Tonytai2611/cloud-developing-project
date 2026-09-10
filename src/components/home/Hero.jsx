@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { UtensilsCrossed, ChevronDown } from "lucide-react";
 
 const Hero = () => {
+  const landingHeroImage = `${process.env.PUBLIC_URL}/landingpage.png`;
+
   const scrollToContent = () => {
     window.scrollTo({ top: window.innerHeight - 80, behavior: 'smooth' });
   };
@@ -12,8 +14,8 @@ const Hero = () => {
       {/* Background Image with Overlay */}
       <div className="absolute inset-0">
         <img
-          src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1920"
-          alt="Restaurant background"
+          src={landingHeroImage}
+          alt="BrewCraft cafe interior"
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent" />

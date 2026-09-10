@@ -1,3 +1,4 @@
+@import './styles/tokens.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -17,13 +18,25 @@
   --container: 1200px;
 }
 
-html,body,#root{
+html, body, #root {
   height:100%;
+  overflow-x: clip;
+}
+
+html {
+  scrollbar-gutter: stable;
+  overflow-y: scroll;
+}
+
+/* Radix locks page scroll while a dialog is open. The gutter is already
+   reserved above, so its inline compensation must not move the header. */
+body[data-scroll-locked] {
+  margin-right: 0 !important;
 }
 
 body{
-  background: var(--bg);
-  color: #0f172a;
+  background: var(--color-page, var(--bg));
+  color: var(--color-text, #0f172a);
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
 }

@@ -1,0 +1,401 @@
+/* Hallmark · pre-emit critique: P4 H5 E4 S5 R5 V4 */
+/* Hallmark - component system: BrewCraft shared UI tokens
+ * states: default - hover - focus - active - disabled - loading - error - success
+ * contrast: pass
+ */
+:root {
+  --color-page: #f3fbf9;
+  --color-page-soft: #eaf8f5;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f7faf9;
+  --color-border: #d8e3e1;
+  --color-border-strong: #bfd2ce;
+
+  --color-text: #102326;
+  --color-text-muted: #627073;
+  --color-text-subtle: #819094;
+  --color-on-brand: #ffffff;
+
+  --color-brand-900: #0b3f3f;
+  --color-brand-800: #0f5552;
+  --color-brand-700: #0f6b61;
+  --color-brand-600: #0f8a80;
+  --color-brand-500: #16b8aa;
+  --color-brand-100: #dff8f3;
+  --color-brand-50: #effcf9;
+  --color-auth-action-start: #0b625c;
+  --color-auth-action-end: #064945;
+  --color-auth-glass: rgba(8, 54, 51, 0.72);
+  --color-auth-glass-border: rgba(255, 255, 255, 0.38);
+  --color-auth-paper: rgba(255, 253, 248, 0.96);
+  --color-auth-paper-border: rgba(255, 255, 255, 0.62);
+
+  --color-accent: #1f7ae0;
+  --color-accent-soft: #e8f2ff;
+  --color-success: #0f8a5f;
+  --color-success-soft: #e5f8ef;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fff1f1;
+  --color-info: #2563eb;
+  --color-info-soft: #eff6ff;
+
+  --gradient-brand: linear-gradient(135deg, var(--color-brand-600), var(--color-brand-500));
+  --gradient-auth-action: linear-gradient(105deg, var(--color-auth-action-start), var(--color-auth-action-end));
+  --gradient-auth-glass: linear-gradient(135deg, rgba(4, 55, 52, 0.77), rgba(5, 65, 61, 0.58), rgba(7, 38, 37, 0.72));
+  --gradient-shell: linear-gradient(90deg, var(--color-brand-900), var(--color-brand-800), var(--color-brand-700));
+  --gradient-profile: linear-gradient(110deg, var(--color-brand-500), var(--color-brand-600), var(--color-accent));
+
+  --shadow-card: 0 20px 60px rgba(15, 85, 82, 0.14);
+  --shadow-control: 0 10px 24px rgba(15, 138, 128, 0.18);
+  --shadow-auth-dialog: 0 32px 90px rgba(1, 20, 19, 0.38), 0 2px 10px rgba(1, 20, 19, 0.2);
+  --radius-card: 18px;
+  --radius-control: 12px;
+  --radius-pill: 999px;
+  --dur-fast: 150ms;
+  --dur-base: 220ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.app-page {
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 18% 10%, rgba(22, 184, 170, 0.08), transparent 28rem),
+      linear-gradient(135deg, var(--color-page), var(--color-surface), var(--color-page-soft));
+    color: var(--color-text);
+  }
+
+  .app-container {
+    width: min(100%, 960px);
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+
+  .app-card {
+    background: var(--color-surface);
+    border: 1px solid rgba(216, 227, 225, 0.9);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+
+  .brand-cover {
+    background: var(--gradient-profile);
+  }
+
+  .profile-avatar {
+    background: var(--gradient-brand);
+    border: 4px solid var(--color-surface);
+    box-shadow: 0 18px 42px rgba(15, 85, 82, 0.22);
+  }
+
+  .icon-action {
+    background: var(--color-brand-600);
+    color: var(--color-on-brand);
+    transition: transform var(--dur-base) var(--ease-out), background var(--dur-base) var(--ease-out);
+  }
+
+  .icon-action:hover {
+    background: var(--color-brand-700);
+    transform: translateY(-1px);
+  }
+
+  .field-label {
+    color: var(--color-text);
+    font-weight: 650;
+  }
+
+  .field-icon {
+    color: var(--color-brand-600);
+  }
+
+  .field-input {
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-surface);
+    color: var(--color-text);
+    padding: 0.875rem 1rem;
+    outline: none;
+    transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+  }
+
+  .field-input:focus-visible {
+    border-color: var(--color-brand-500);
+    box-shadow: 0 0 0 4px rgba(22, 184, 170, 0.16);
+  }
+
+  .field-input:disabled {
+    background: var(--color-surface-muted);
+    color: var(--color-text-muted);
+    cursor: not-allowed;
+  }
+
+  .status-pill {
+    border-radius: var(--radius-pill);
+    background: var(--color-brand-100);
+    color: var(--color-brand-800);
+    font-weight: 700;
+  }
+
+  .readonly-pill {
+    border-radius: var(--radius-pill);
+    background: #e8eeee;
+    color: var(--color-text-muted);
+  }
+
+.btn-primary {
+    background: var(--color-brand-800);
+    color: var(--color-on-brand);
+    border-radius: var(--radius-control);
+    box-shadow: var(--shadow-control);
+    transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out), opacity var(--dur-base) var(--ease-out);
+  }
+
+.btn-primary:hover {
+    background: var(--color-brand-700);
+    transform: translateY(-1px);
+    box-shadow: 0 14px 30px rgba(6, 73, 69, 0.28);
+}
+
+.btn-primary:active {
+    background: var(--color-brand-900);
+    transform: translateY(1px);
+}
+
+  .btn-primary:focus-visible {
+    outline: 3px solid rgba(22, 184, 170, 0.32);
+    outline-offset: 2px;
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-danger {
+    background: var(--color-danger-soft);
+    color: var(--color-danger);
+    border: 1px solid #fecaca;
+    border-radius: var(--radius-control);
+    transition: background var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
+  }
+
+  .btn-danger:hover {
+    background: #ffe4e6;
+    border-color: #fca5a5;
+  }
+
+  .info-callout {
+    background: var(--color-info-soft);
+    border-left: 4px solid var(--color-info);
+    border-radius: 10px;
+  }
+
+  .app-header {
+    background: var(--gradient-shell);
+    box-shadow: 0 10px 28px rgba(11, 63, 63, 0.22);
+  }
+
+  .nav-link {
+    color: var(--color-on-brand);
+    font-weight: 650;
+    transition: color var(--dur-fast) var(--ease-out), opacity var(--dur-fast) var(--ease-out);
+  }
+
+  .nav-link:hover {
+    color: var(--color-brand-100);
+  }
+
+  .user-chip {
+    background: rgba(255, 255, 255, 0.11);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    color: var(--color-on-brand);
+    backdrop-filter: blur(10px);
+  }
+
+  .btn-shell {
+    background: rgba(255, 255, 255, 0.94);
+    color: var(--color-brand-800);
+    border: 1px solid rgba(255, 255, 255, 0.52);
+    border-radius: var(--radius-control);
+    box-shadow: 0 10px 26px rgba(11, 63, 63, 0.18);
+    transition: transform var(--dur-base) var(--ease-out), background var(--dur-base) var(--ease-out);
+  }
+
+.btn-shell:hover {
+  background: var(--color-surface);
+  transform: translateY(-1px);
+}
+
+.auth-trigger {
+  border: 1px solid var(--color-brand-800);
+  border-radius: var(--radius-control);
+  background: var(--color-brand-800);
+  color: var(--color-on-brand);
+  box-shadow: var(--shadow-control);
+  transition: background var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.auth-trigger:hover {
+  background: var(--color-brand-700);
+}
+
+.auth-trigger:focus-visible {
+  outline: 3px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+.auth-trigger:active {
+  background: var(--color-brand-900);
+}
+
+.auth-side-panel {
+  background: var(--color-brand-900);
+  color: var(--color-on-brand);
+}
+
+.auth-dialog > button {
+  z-index: 1;
+  right: 1.25rem;
+  top: 1.25rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+.auth-dialog > button:hover {
+  background: var(--color-brand-100);
+  color: var(--color-brand-800);
+}
+
+.auth-dialog > button:focus-visible {
+  outline: 3px solid rgba(22, 184, 170, 0.35);
+  outline-offset: 2px;
+}
+
+.auth-dialog {
+  animation: none !important;
+  transform: translate(-50%, -50%) !important;
+  transform-origin: center !important;
+  border: 1px solid var(--color-auth-glass-border) !important;
+  box-shadow: var(--shadow-auth-dialog) !important;
+}
+
+.auth-dialog-shell {
+  background: var(--color-auth-glass);
+}
+
+.auth-form-panel {
+  background: var(--color-auth-paper);
+  color: var(--color-text);
+  border-left: 1px solid var(--color-auth-paper-border);
+  backdrop-filter: blur(24px) saturate(112%);
+  -webkit-backdrop-filter: blur(24px) saturate(112%);
+}
+
+.auth-side-overlay {
+  background: var(--gradient-auth-glass);
+  backdrop-filter: blur(1.5px) saturate(108%);
+  -webkit-backdrop-filter: blur(1.5px) saturate(108%);
+}
+
+.auth-accent-bar {
+  background: var(--gradient-profile);
+}
+
+.auth-tab-list {
+  background: var(--color-surface-muted);
+  border: 1px solid var(--color-border);
+}
+
+.auth-tab {
+  border-radius: 10px;
+  color: var(--color-text-muted);
+  font-weight: 700;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.auth-tab:hover {
+  color: var(--color-text);
+}
+
+.auth-tab:focus-visible {
+  outline: 3px solid var(--color-brand-500);
+  outline-offset: 2px;
+}
+
+.auth-tab:active {
+  transform: translateY(1px);
+}
+
+.auth-tab-active {
+  background: var(--color-brand-800);
+  color: var(--color-on-brand);
+  box-shadow: 0 8px 18px rgba(11, 63, 63, 0.18);
+}
+
+.auth-label {
+  color: var(--color-text);
+  font-weight: 650;
+}
+
+.auth-icon {
+  color: var(--color-brand-600);
+}
+
+.auth-input {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  box-shadow: inset 0 1px 2px rgba(16, 35, 38, 0.04);
+  outline: 2px solid transparent;
+  outline-offset: 1px;
+  transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+
+.auth-input:hover {
+  border-color: var(--color-border-strong);
+}
+
+.auth-input:focus-visible {
+  background: var(--color-surface);
+  border-color: var(--color-brand-500);
+  box-shadow: 0 0 0 4px rgba(22, 184, 170, 0.16);
+  outline-color: var(--color-brand-600);
+}
+
+.auth-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-dialog,
+  .auth-dialog * {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .auth-form-panel {
+    border-left: 0;
+  }
+}
+
+.auth-link {
+  color: var(--color-brand-800);
+  font-weight: 700;
+}
+
+.auth-link:hover {
+  color: var(--color-brand-600);
+}
+
+.auth-requirements {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-muted);
+}
