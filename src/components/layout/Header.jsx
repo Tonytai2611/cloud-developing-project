@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { MessageCircle, Eye, EyeOff, Mail, Lock, User, Check, X, UserCircle, Coffee, Phone, ArrowRight, CalendarDays, ChevronDown, LoaderCircle, ShieldCheck, LogIn, UserPlus } from "lucide-react";
+import { MessageCircle, Eye, EyeOff, Mail, Lock, User, Check, X, UserCircle, Coffee, Phone, ArrowRight, CalendarDays, LoaderCircle, ShieldCheck, LogIn, UserPlus } from "lucide-react";
 import { Button } from "../ui/button";
 import {
     Dialog,
@@ -27,7 +27,6 @@ const Header = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
-    const [role, setRole] = useState('customer'); // Default role
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -161,7 +160,7 @@ const Header = () => {
             localStorage.setItem('username', cognitoUsername);
             localStorage.setItem('email', cognitoUsername);
             localStorage.setItem('name', name);
-            localStorage.setItem('role', role); // Save role to localStorage
+            localStorage.setItem('role', 'customer');
 
             // Close dialog before navigating
             setDialogOpen(false);
@@ -197,27 +196,30 @@ const Header = () => {
     };
 
     return (
-        <header className="app-header fixed top-0 w-full z-50">
-            <nav className="container flex items-center justify-between h-20">
+        <header className="app-header fixed top-0 z-50 w-full">
+            <nav className="container flex h-[88px] items-center justify-between">
                 <div className="flex items-center gap-4">
                     <Link to="/" className="flex items-center gap-3">
-                        <img src="/logo.png" alt="BrewCraft" className="w-12 h-12 rounded-md object-cover shadow-sm" />
-                        <span className="text-white text-xl font-semibold">BrewCraft</span>
+                        <img src="/logo.png" alt="BrewCraft" className="h-[52px] w-[52px] rounded-xl object-cover shadow-md" />
+                        <span className="text-xl font-bold tracking-tight text-white">BrewCraft</span>
                     </Link>
                 </div>
 
-                <div className="hidden md:flex items-center gap-10">
+                <div className="hidden items-center gap-8 lg:flex">
                     <Link to="/" className="nav-link">
                         Home
                     </Link>
                     <Link to="/menu" className="nav-link">
                         Menu
                     </Link>
-                    <Link to="/table" className="nav-link">
-                        Table
+                    <Link to="/booking" className="nav-link">
+                        Reservation
+                    </Link>
+                    <Link to="/#about" className="nav-link">
+                        About
                     </Link>
                     <Link to="/contact-us" className="nav-link">
-                        Contact Us
+                        Contact
                     </Link>
                     {user && (
                         <>
@@ -255,14 +257,14 @@ const Header = () => {
                     ) : (
                         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                             <DialogTrigger asChild>
-                                <Button className="auth-trigger px-6 py-2.5 font-bold hover:!translate-y-0 active:!translate-y-0">
+                                <Button className="auth-trigger min-w-24 border-amber-300/80 px-6 py-2.5 font-bold hover:!translate-y-0 active:!translate-y-0">
                                     Login
                                 </Button>
                             </DialogTrigger>
 
-                            <DialogContent className="auth-dialog max-h-[92vh] w-[calc(100vw-2rem)] max-w-[760px] gap-0 overflow-hidden overflow-y-auto rounded-2xl border-0 bg-transparent p-0 shadow-2xl data-[state=closed]:animate-none data-[state=open]:animate-none">
-                                <div className="auth-dialog-shell grid md:grid-cols-[280px_minmax(0,1fr)]">
-                                    <aside className="auth-side-panel relative hidden min-h-[560px] overflow-hidden p-7 md:flex md:flex-col md:justify-between">
+                            <DialogContent className="auth-dialog max-h-[92vh] w-[calc(100vw-2rem)] max-w-[960px] gap-0 overflow-hidden overflow-y-auto rounded-2xl border-0 bg-transparent p-0 shadow-2xl data-[state=closed]:animate-none data-[state=open]:animate-none">
+                                <div className="auth-dialog-shell grid md:min-h-[720px] md:grid-cols-[350px_minmax(0,1fr)]">
+                                    <aside className="auth-side-panel relative hidden overflow-hidden p-7 md:flex md:flex-col md:justify-between">
                                         <img
                                             src={cafeHeroImage}
                                             alt=""
@@ -277,7 +279,7 @@ const Header = () => {
                                             <p className="mb-5 text-xs font-semibold uppercase tracking-[0.3em] text-amber-200">
                                                 BrewCraft
                                             </p>
-                                            <h2 className="max-w-sm font-serif text-3xl font-semibold leading-[1.12] text-white">
+                                            <h2 className="max-w-sm font-serif text-[34px] font-semibold leading-[1.12] text-white">
                                                 {activeTab === "login"
                                                     ? "Fresh coffee, warm tables, one simple account."
                                                     : "Join a community that celebrates great food and good company."}
@@ -301,7 +303,7 @@ const Header = () => {
                                     </aside>
 
                                     <section className="auth-form-panel relative flex p-6 sm:p-8 md:items-center">
-                                        <div className="mx-auto w-full max-w-[380px]">
+                                        <div className="mx-auto w-full max-w-[540px]">
                                         <DialogHeader className="pr-10 text-left">
                                             <DialogTitle className="font-serif text-3xl font-semibold leading-tight text-[var(--color-text)] sm:text-4xl">
                                                 {activeTab === "login" ? "Welcome back" : "Create your account"}
@@ -357,7 +359,7 @@ const Header = () => {
                                                         name="username"
                                                         autoComplete="username"
                                                         required
-                                                        className="auth-input h-12 w-full pl-11 pr-4 text-sm placeholder:text-slate-400"
+                                                        className="auth-input h-[52px] w-full pl-11 pr-4 text-sm placeholder:text-slate-400"
                                                         placeholder="Enter your email"
                                                         value={username}
                                                         onChange={(event) => setUsername(event.target.value)}
@@ -380,7 +382,7 @@ const Header = () => {
                                                         name="password"
                                                         autoComplete="current-password"
                                                         required
-                                                        className="auth-input h-12 w-full pl-11 pr-11 text-sm placeholder:text-slate-400"
+                                                        className="auth-input h-[52px] w-full pl-11 pr-11 text-sm placeholder:text-slate-400"
                                                         placeholder="Enter your password"
                                                         value={password}
                                                         onChange={(event) => setPassword(event.target.value)}
@@ -406,7 +408,7 @@ const Header = () => {
                                             <Button
                                                 type="submit"
                                                 disabled={loading}
-                                                className="btn-primary h-12 w-full font-semibold disabled:opacity-50"
+                                                className="btn-primary h-[52px] w-full font-semibold disabled:opacity-50"
                                             >
                                                 {loading ? (
                                                     <span className="flex items-center justify-center gap-2">
@@ -423,9 +425,9 @@ const Header = () => {
                                     )}
 
                                     {activeTab === "register" && (
-                                        <form className="space-y-3" onSubmit={onSubmit}>
+                                        <form className="space-y-[18px]" onSubmit={onSubmit}>
                                             {/* Name and Email in 2 columns */}
-                                            <div className="grid gap-3 sm:grid-cols-2">
+                                            <div className="grid gap-[18px] sm:grid-cols-2">
                                                 {/* Name Field */}
                                                 <div>
                                                     <label htmlFor="name" className="auth-label block text-sm mb-1.5">
@@ -438,7 +440,7 @@ const Header = () => {
                                                         <input
                                                             type="text"
                                                             id="name"
-                                                        className="auth-input h-11 w-full pl-10 pr-3 text-sm placeholder:text-slate-400"
+                                                        className="auth-input h-[52px] w-full pl-10 pr-3 text-sm placeholder:text-slate-400"
                                                             placeholder="Your name"
                                                             value={name}
                                                             onChange={(event) => setName(event.target.value)}
@@ -458,7 +460,7 @@ const Header = () => {
                                                         <input
                                                             type="text"
                                                             id="reg-username"
-                                                        className="auth-input h-11 w-full pl-10 pr-3 text-sm placeholder:text-slate-400"
+                                                        className="auth-input h-[52px] w-full pl-10 pr-3 text-sm placeholder:text-slate-400"
                                                         placeholder="Sign in with email"
                                                             value={username}
                                                             onChange={(event) => setUsername(event.target.value)}
@@ -468,7 +470,7 @@ const Header = () => {
                                             </div>
 
                                             {/* Email and Phone in 2 columns */}
-                                            <div className="grid gap-3 sm:grid-cols-2">
+                                            <div className="grid gap-[18px] sm:grid-cols-2">
                                                 {/* Email Field */}
                                                 <div>
                                                     <label htmlFor="email" className="auth-label block text-sm mb-1.5">
@@ -481,7 +483,7 @@ const Header = () => {
                                                         <input
                                                             type="email"
                                                             id="email"
-                                                        className="auth-input h-11 w-full pl-10 pr-3 text-sm placeholder:text-slate-400"
+                                                        className="auth-input h-[52px] w-full pl-10 pr-3 text-sm placeholder:text-slate-400"
                                                             placeholder="Enter email"
                                                             value={email}
                                                             onChange={(event) => setEmail(event.target.value)}
@@ -501,7 +503,7 @@ const Header = () => {
                                                         <input
                                                             type="tel"
                                                             id="phoneNumber"
-                                                        className="auth-input h-11 w-full pl-10 pr-3 text-sm placeholder:text-slate-400"
+                                                        className="auth-input h-[52px] w-full pl-10 pr-3 text-sm placeholder:text-slate-400"
                                                             placeholder="0123456789"
                                                             value={phoneNumber}
                                                             onChange={(event) => setPhoneNumber(event.target.value)}
@@ -510,30 +512,8 @@ const Header = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Role and Password in 2 columns */}
-                                            <div className="grid gap-3 sm:grid-cols-2">
-                                                {/* Role Field */}
-                                                <div>
-                                                    <label htmlFor="role" className="auth-label block text-sm mb-1.5">
-                                                        Role
-                                                    </label>
-                                                    <div className="relative">
-                                                        <select
-                                                            id="role"
-                                                            className="auth-input h-11 w-full cursor-pointer appearance-none pl-3 pr-9 text-sm"
-                                                            value={role}
-                                                            onChange={(event) => setRole(event.target.value)}
-                                                        >
-                                                            <option value="customer">Customer</option>
-                                                            <option value="admin">Admin</option>
-                                                        </select>
-                                                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                                            <ChevronDown className="h-4 w-4 text-slate-400" />
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Password Field */}
+                                            {/* Password Field */}
+                                            <div>
                                                 <div>
                                                     <label htmlFor="reg-password" className="auth-label block text-sm mb-1.5">
                                                         Password
@@ -545,7 +525,10 @@ const Header = () => {
                                                         <input
                                                             type={showPassword ? "text" : "password"}
                                                             id="reg-password"
-                                                        className="auth-input h-11 w-full pl-10 pr-10 text-sm placeholder:text-slate-400"
+                                                            name="new-password"
+                                                            autoComplete="new-password"
+                                                            required
+                                                            className="auth-input h-[52px] w-full pl-10 pr-10 text-sm placeholder:text-slate-400"
                                                             placeholder="Password"
                                                             value={password}
                                                             onChange={(event) => setPassword(event.target.value)}
@@ -561,10 +544,10 @@ const Header = () => {
                                                 </div>
                                             </div>
 
-                                            {/* Password Requirements - Compact 2 columns */}
+                                            {/* Password Requirements */}
                                             <div className="auth-requirements rounded-xl p-3">
                                                 <p className="mb-2 text-xs font-semibold text-[var(--color-text-muted)]">Password requirements:</p>
-                                                <div className="grid gap-x-3 gap-y-1 sm:grid-cols-2">
+                                                <div className="grid gap-x-3 gap-y-1 sm:grid-cols-2 md:grid-cols-3">
                                                     {passwordRequirements.map((req, index) => {
                                                         const isValid = req.test(password);
                                                         return (
@@ -586,7 +569,7 @@ const Header = () => {
                                             <Button
                                                 type="submit"
                                                 disabled={loading}
-                                                className="btn-primary h-12 w-full font-semibold disabled:opacity-50"
+                                                className="btn-primary h-[52px] w-full font-semibold disabled:opacity-50"
                                             >
                                                 {loading ? (
                                                     <span className="flex items-center justify-center gap-2">

@@ -159,7 +159,7 @@ const IntroductionComponent = () => {
       </section>
 
       {/* Our Story Section */}
-      <section className="py-20 bg-white overflow-hidden">
+      <section id="about" className="scroll-mt-24 overflow-hidden bg-white py-20">
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row items-center gap-16">
             {/* Image Side */}
