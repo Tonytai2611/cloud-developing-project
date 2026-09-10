@@ -1,0 +1,10 @@
+import React from 'react';
+import { ArrowRight } from 'lucide-react';
+
+const tones = {
+  teal: ['bg-teal-100 text-teal-700', 'bg-teal-50 text-teal-800'], orange: ['bg-orange-100 text-orange-700', 'bg-orange-50 text-orange-800'], blue: ['bg-blue-100 text-blue-700', 'bg-blue-50 text-blue-800'], pink: ['bg-pink-100 text-pink-700', 'bg-pink-50 text-pink-800'],
+};
+
+export default function QuickActions({ actions, navigate, query }) {
+  return <section><div className="mb-4 flex items-end justify-between gap-4"><div><h2 className="text-2xl font-black text-slate-950">Quick Actions</h2><p className="mt-1 text-sm text-slate-500">Get things done quickly and keep your restaurant running smoothly.</p></div><p className="hidden text-xs text-slate-400 sm:block">Everything you need, in one place.</p></div>{actions.length ? <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{actions.map(({ title, description, label, route, icon: Icon, tone }) => <button key={title} type="button" onClick={() => navigate(route)} className="group min-h-48 rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2 active:translate-y-px"><span className={`grid h-12 w-12 place-items-center rounded-2xl ${tones[tone][0]}`}><Icon className="h-6 w-6" /></span><h3 className="mt-4 text-lg font-black text-slate-950">{title}</h3><p className="mt-1 min-h-10 text-sm leading-5 text-slate-500">{description}</p><span className={`mt-4 inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-bold ${tones[tone][1]}`}>{label}<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span></button>)}</div> : <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center"><p className="font-bold text-slate-800">No action matches “{query}”.</p><p className="mt-1 text-sm text-slate-500">Try searching for tables, menu, orders, or chat.</p></div>}</section>;
+}
