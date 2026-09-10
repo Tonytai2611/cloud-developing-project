@@ -11,6 +11,8 @@ const env = {
   cognitoClientSecret: process.env.COGNITO_CLIENT_SECRET,
   cognitoUserPoolId: process.env.COGNITO_USER_POOL_ID,
   usersTable: process.env.USERS_TABLE || process.env.REACT_APP_USERS_TABLE,
+  menuTable: process.env.MENU_TABLE,
+  tablesTable: process.env.TABLES_TABLE,
   contactHandlerFunctionName: process.env.CONTACT_HANDLER_FUNCTION_NAME,
   uploadImageFunctionName: process.env.UPLOAD_IMAGE_FUNCTION_NAME,
 };

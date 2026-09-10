@@ -16,6 +16,38 @@ const PORT = env.port;
 const CLIENT_ID = env.cognitoClientId;
 const CLIENT_SECRET = env.cognitoClientSecret;
 const USERS_TABLE = env.usersTable;
+const MENU_TABLE = env.menuTable;
+const TABLES_TABLE = env.tablesTable;
+
+function getConfiguredTable(tableName, res, label) {
+  if (!tableName) {
+    res.status(500).json({ error: `Server misconfiguration: ${label} missing` });
+    return null;
+  }
+  return tableName;
+}
+
+function buildUpdateExpression(data, reservedNames = new Set()) {
+  const updateParts = [];
+  const ExpressionAttributeNames = {};
+  const ExpressionAttributeValues = {};
+
+  Object.entries(data).forEach(([key, value]) => {
+    if (key === 'id' || value === undefined) return;
+
+    const nameToken = reservedNames.has(key) ? `#${key}` : key;
+    if (reservedNames.has(key)) ExpressionAttributeNames[nameToken] = key;
+
+    updateParts.push(`${nameToken} = :${key}`);
+    ExpressionAttributeValues[`:${key}`] = value;
+  });
+
+  return {
+    UpdateExpression: updateParts.length > 0 ? `SET ${updateParts.join(', ')}` : '',
+    ExpressionAttributeNames,
+    ExpressionAttributeValues,
+  };
+}
 
 function generateSecretHash(username) {
   if (!CLIENT_SECRET) return undefined;
@@ -229,6 +261,188 @@ app.post('/logout', (req, res) => {
     }),
   ]);
   return res.status(200).json({ message: 'Logged out successfully' });
+});
+
+app.get('/getMenu', async (req, res) => {
+  const tableName = getConfiguredTable(MENU_TABLE, res, 'MENU_TABLE');
+  if (!tableName) return;
+
+  try {
+    const response = await dynamodb.scan({ TableName: tableName }).promise();
+    return res.json({ message: 'Menu retrieved successfully', data: response.Items || [] });
+  } catch (error) {
+    console.error('GET /getMenu error:', error);
+    return res.status(500).json({ error: 'Failed to read menu', detail: error.message });
+  }
+});
+
+app.post('/createMenuItem', async (req, res) => {
+  const tableName = getConfiguredTable(MENU_TABLE, res, 'MENU_TABLE');
+  if (!tableName) return;
+
+  const items = Array.isArray(req.body) ? req.body : [req.body];
+  if (items.some(item => !item?.id || !item?.title || !item?.dishes)) {
+    return res.status(400).json({ error: 'Missing required fields: id, title, dishes' });
+  }
+
+  try {
+    await Promise.all(items.map(item => dynamodb.put({
+      TableName: tableName,
+      Item: { ...item, id: String(item.id) },
+    }).promise()));
+
+    const responseData = Array.isArray(req.body)
+      ? items.map(item => ({ ...item, id: String(item.id) }))
+      : { ...req.body, id: String(req.body.id) };
+
+    return res.status(201).json({ message: 'Menu item created successfully', data: responseData });
+  } catch (error) {
+    console.error('POST /createMenuItem error:', error);
+    return res.status(500).json({ error: 'Failed to create menu item', detail: error.message });
+  }
+});
+
+app.put('/updateMenuItem', async (req, res) => {
+  const tableName = getConfiguredTable(MENU_TABLE, res, 'MENU_TABLE');
+  if (!tableName) return;
+
+  const data = req.body || {};
+  if (!data.id) return res.status(400).json({ error: 'Menu item id is required' });
+
+  const update = buildUpdateExpression(data);
+  if (!update.UpdateExpression) return res.status(400).json({ error: 'Nothing to update' });
+
+  try {
+    const response = await dynamodb.update({
+      TableName: tableName,
+      Key: { id: String(data.id) },
+      UpdateExpression: update.UpdateExpression,
+      ExpressionAttributeValues: update.ExpressionAttributeValues,
+      ReturnValues: 'ALL_NEW',
+    }).promise();
+
+    return res.json({ message: 'Menu item updated successfully', data: response.Attributes || {} });
+  } catch (error) {
+    console.error('PUT /updateMenuItem error:', error);
+    return res.status(500).json({ error: 'Failed to update menu item', detail: error.message });
+  }
+});
+
+app.delete('/deleteMenuItem', async (req, res) => {
+  const tableName = getConfiguredTable(MENU_TABLE, res, 'MENU_TABLE');
+  if (!tableName) return;
+
+  const { id } = req.body || {};
+  if (!id) return res.status(400).json({ error: 'Menu item id is required' });
+
+  try {
+    await dynamodb.delete({ TableName: tableName, Key: { id: String(id) } }).promise();
+    return res.json({ message: 'Menu item deleted successfully' });
+  } catch (error) {
+    console.error('DELETE /deleteMenuItem error:', error);
+    return res.status(500).json({ error: 'Failed to delete menu item', detail: error.message });
+  }
+});
+
+app.get('/getTable', async (req, res) => {
+  const tableName = getConfiguredTable(TABLES_TABLE, res, 'TABLES_TABLE');
+  if (!tableName) return;
+
+  try {
+    const response = await dynamodb.scan({ TableName: tableName }).promise();
+    return res.json({ message: 'Tables retrieved successfully', data: response.Items || [] });
+  } catch (error) {
+    console.error('GET /getTable error:', error);
+    return res.status(500).json({ error: 'Failed to read tables', detail: error.message });
+  }
+});
+
+async function generateTableId() {
+  const response = await dynamodb.scan({
+    TableName: TABLES_TABLE,
+    ProjectionExpression: 'id',
+  }).promise();
+  return `TBL-${String((response.Items || []).length + 1).padStart(3, '0')}`;
+}
+
+app.post('/createTable', async (req, res) => {
+  const tableName = getConfiguredTable(TABLES_TABLE, res, 'TABLES_TABLE');
+  if (!tableName) return;
+
+  const data = { ...(req.body || {}) };
+  if (!data.id) data.id = await generateTableId();
+  if (!data.tableNumber || !data.seats) {
+    return res.status(400).json({ error: 'Missing required fields: tableNumber, seats' });
+  }
+
+  data.id = String(data.id);
+  data.status = data.status || 'AVAILABLE';
+  if (!['AVAILABLE', 'RESERVED'].includes(data.status)) {
+    return res.status(400).json({ error: 'Status must be AVAILABLE or RESERVED' });
+  }
+
+  try {
+    await dynamodb.put({ TableName: tableName, Item: data }).promise();
+    return res.status(201).json({ message: 'Table created successfully', data });
+  } catch (error) {
+    console.error('POST /createTable error:', error);
+    return res.status(500).json({ error: 'Failed to create table', detail: error.message });
+  }
+});
+
+app.put('/updateTable', async (req, res) => {
+  const tableName = getConfiguredTable(TABLES_TABLE, res, 'TABLES_TABLE');
+  if (!tableName) return;
+
+  const data = req.body || {};
+  if (!data.id) return res.status(400).json({ error: 'Table id is required' });
+  if (data.status && !['AVAILABLE', 'RESERVED'].includes(data.status)) {
+    return res.status(400).json({ error: 'Status must be AVAILABLE or RESERVED' });
+  }
+
+  const update = buildUpdateExpression(data, new Set(['status']));
+  if (!update.UpdateExpression) return res.status(400).json({ error: 'Nothing to update' });
+
+  try {
+    const params = {
+      TableName: tableName,
+      Key: { id: String(data.id) },
+      UpdateExpression: update.UpdateExpression,
+      ExpressionAttributeValues: update.ExpressionAttributeValues,
+      ReturnValues: 'ALL_NEW',
+    };
+
+    if (Object.keys(update.ExpressionAttributeNames).length > 0) {
+      params.ExpressionAttributeNames = update.ExpressionAttributeNames;
+    }
+
+    const response = await dynamodb.update(params).promise();
+    return res.json({ message: 'Table updated successfully', data: response.Attributes || {} });
+  } catch (error) {
+    console.error('PUT /updateTable error:', error);
+    return res.status(500).json({ error: 'Failed to update table', detail: error.message });
+  }
+});
+
+app.delete('/deleteTable', async (req, res) => {
+  const tableName = getConfiguredTable(TABLES_TABLE, res, 'TABLES_TABLE');
+  if (!tableName) return;
+
+  const { id } = req.body || {};
+  if (!id) return res.status(400).json({ error: 'Table id is required' });
+
+  try {
+    const current = await dynamodb.get({ TableName: tableName, Key: { id: String(id) } }).promise();
+    if (current.Item?.status === 'RESERVED') {
+      return res.status(400).json({ error: 'Cannot delete table that is currently reserved' });
+    }
+
+    await dynamodb.delete({ TableName: tableName, Key: { id: String(id) } }).promise();
+    return res.json({ message: 'Table deleted successfully' });
+  } catch (error) {
+    console.error('DELETE /deleteTable error:', error);
+    return res.status(500).json({ error: 'Failed to delete table', detail: error.message });
+  }
 });
 
 // --- User CRUD endpoints (operate on USERS_TABLE)
