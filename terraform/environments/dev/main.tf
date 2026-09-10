@@ -88,6 +88,9 @@ module "ecs" {
     PORT                 = "3001"
     USERS_TABLE          = module.dynamodb.users_table_name
   }
+
+  cpu                   = 256
+  memory                = 512
   users_table_arn       = module.dynamodb.users_table_arn
   cognito_user_pool_arn = "arn:aws:cognito-idp:${var.aws_region}:${data.aws_caller_identity.current.account_id}:userpool/${var.cognito_user_pool_id}"
   desired_count         = 1
@@ -95,3 +98,20 @@ module "ecs" {
   tags                  = local.common_tags
 }
 
+module "frontend_hosting" {
+  source = "../../modules/frontend-hosting"
+
+  project_name = var.project_name
+  environment  = var.environment
+  account_id   = data.aws_caller_identity.current.account_id
+  tags         = local.common_tags
+}
+
+module "image_bucket" {
+  source = "../../modules/image-bucket"
+
+  project_name = var.project_name
+  environment  = var.environment
+  account_id   = data.aws_caller_identity.current.account_id
+  tags         = local.common_tags
+}
