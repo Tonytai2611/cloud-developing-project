@@ -321,7 +321,7 @@
 }
 
 .auth-tab {
-  border-radius: 10px;
+  border-radius: 0;
   color: var(--color-text-muted);
   font-weight: 700;
   transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);

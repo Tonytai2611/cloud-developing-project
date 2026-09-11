@@ -1,3 +1,3 @@
-import AdminManageMenuCategoryPage from '../../components/admin/ui/AdminManageMenuCategoryPage';
+import MenuManagementPage from '../../components/admin/menu/ui/MenuManagementPage';
 
-export default AdminManageMenuCategoryPage;
+export default MenuManagementPage;

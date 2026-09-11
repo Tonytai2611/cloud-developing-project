@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { UtensilsCrossed, Flame, Clock, Star, ArrowRight, Leaf, ChefHat, CheckCircle } from "lucide-react";
+import { UtensilsCrossed, Clock, Star, ArrowRight, Leaf, ChefHat, CheckCircle } from "lucide-react";
 import { tableApi } from "../table/services/tableApi";
 import { bookingApi } from "../booking/services/bookingApi";
 import { toast } from "sonner";
@@ -155,62 +155,6 @@ const IntroductionComponent = () => {
               <p className="text-sm text-gray-500 tracking-wider">— THE BREWCRAFT TEAM</p>
             </div>
           </motion.div>
-        </div>
-      </section>
-
-      {/* Our Story Section */}
-      <section id="about" className="scroll-mt-24 overflow-hidden bg-white py-20">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col lg:flex-row items-center gap-16">
-            {/* Image Side */}
-            <motion.div
-              initial={{ opacity: 0, x: -100 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="flex-1 relative"
-            >
-              <div className="relative">
-                <img
-                  src="https://images.unsplash.com/photo-1552566626-52f8b828add9?w=600"
-                  alt="Our Story"
-                  className="w-full h-[500px] object-cover rounded-2xl shadow-xl"
-                />
-                <div className="absolute -bottom-6 -right-6 w-48 h-48 bg-teal-500 rounded-2xl -z-10" />
-                <div className="absolute -top-6 -left-6 w-32 h-32 border-4 border-teal-500 rounded-2xl -z-10" />
-              </div>
-            </motion.div>
-
-            {/* Text Side */}
-            <motion.div
-              initial={{ opacity: 0, x: 100 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-              className="flex-1"
-            >
-              <span className="text-teal-500 tracking-[0.2em] text-sm font-medium">WHO WE ARE</span>
-              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mt-4 mb-6">
-                Our <span className="text-teal-600">Story</span>
-              </h2>
-              <p className="text-gray-600 leading-relaxed mb-6">
-                BrewCraft began with a simple passion: creating unforgettable dining experiences.
-                Our restaurant combines exquisite cuisine with artisan beverages,
-                bringing together the best of both worlds.
-              </p>
-              <p className="text-gray-600 leading-relaxed mb-8">
-                Our team of talented chefs and mixologists brings together years of culinary
-                expertise and a genuine love for food. Every dish we serve is a testament
-                to our commitment to quality and your experience.
-              </p>
-              <a
-                href="/contact-us"
-                className="inline-flex items-center gap-2 text-teal-600 font-semibold hover:gap-4 transition-all"
-              >
-                LEARN MORE <ArrowRight className="w-5 h-5" />
-              </a>
-            </motion.div>
-          </div>
         </div>
       </section>
 

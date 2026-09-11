@@ -46,9 +46,14 @@ export function useAdminMenuCategories({ navigate }) {
     navigate(`/admin/manage-menu/form?id=${category.id}`);
   };
 
-  const filteredMenu = menuCategories.filter(category =>
-    category.title?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredMenu = menuCategories.filter((category) => {
+    if (!normalizedSearch) return true;
+    const dishContent = (category.dishes || [])
+      .map((dish) => `${dish.name || ''} ${dish.description || ''}`)
+      .join(' ');
+    return `${category.title || ''} ${dishContent}`.toLowerCase().includes(normalizedSearch);
+  });
 
   return {
     filteredMenu,

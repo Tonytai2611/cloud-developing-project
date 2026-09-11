@@ -315,12 +315,12 @@ const Header = () => {
                                             </DialogDescription>
                                         </DialogHeader>
                                     {/* Tab Buttons */}
-                                    <div className="auth-tab-list mb-6 mt-6 grid grid-cols-2 rounded-xl p-1" role="tablist" aria-label="Account access">
+                                    <div className="auth-tab-list mb-6 mt-6 grid grid-cols-2 overflow-hidden rounded-xl" role="tablist" aria-label="Account access">
                                         <button
                                             type="button"
                                             role="tab"
                                             aria-selected={activeTab === "login"}
-                                            className={`auth-tab whitespace-nowrap px-4 py-3 text-sm ${activeTab === "login"
+                                            className={`auth-tab min-h-[52px] whitespace-nowrap px-4 py-3 text-sm ${activeTab === "login"
                                                 ? "auth-tab-active"
                                                 : ""
                                                 }`}
@@ -332,7 +332,7 @@ const Header = () => {
                                             type="button"
                                             role="tab"
                                             aria-selected={activeTab === "register"}
-                                            className={`auth-tab whitespace-nowrap px-4 py-3 text-sm ${activeTab === "register"
+                                            className={`auth-tab min-h-[52px] whitespace-nowrap px-4 py-3 text-sm ${activeTab === "register"
                                                 ? "auth-tab-active"
                                                 : ""
                                                 }`}
