@@ -7,6 +7,12 @@ on:
       - dev
     paths:
       - "server/**"
+      - "lambda/**"
+      - "terraform/**"
+      - "src/config/**"
+      - "src/components/auth/**"
+      - "src/components/booking/services/**"
+      - "src/components/table/services/**"
       - "package.json"
       - "package-lock.json"
       - "Dockerfile.api"
