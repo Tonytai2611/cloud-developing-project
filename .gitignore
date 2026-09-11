@@ -36,6 +36,7 @@ Thumbs.db
 .terraform/
 *.tfstate
 *.tfstate.*
+*.tfplan
 
 Frontend_Architecture.md
 Terraform_Architecture.md

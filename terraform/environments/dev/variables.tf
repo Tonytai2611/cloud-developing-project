@@ -23,6 +23,13 @@ variable "vpc_cidr" {
   default     = "10.0.0.0/16"
 }
 
+variable "enable_backend" {
+  description = "Whether to run the ECS backend and its Application Load Balancer."
+  type        = bool
+  default     = true
+  nullable    = false
+}
+
 variable "cognito_user_pool_id" {
   description = "Cognito user pool ID used by the backend runtime."
   type        = string

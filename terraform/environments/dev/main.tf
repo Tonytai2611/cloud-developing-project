@@ -45,6 +45,8 @@ module "ecr" {
 
 
 module "alb" {
+  count = var.enable_backend ? 1 : 0
+
   source = "../../modules/alb"
 
   project_name = var.project_name
@@ -70,13 +72,15 @@ module "dynamodb" {
 }
 
 module "ecs" {
+  count = var.enable_backend ? 1 : 0
+
   source                = "../../modules/ecs"
   project_name          = var.project_name
   environment           = var.environment
   aws_region            = var.aws_region
   subnet_ids            = module.vpc.public-subnet-ids
   ecs_security_group_id = module.security_groups.ecs_security_group_id
-  ecs_target_group_arn  = module.alb.alb_target_group_arn
+  ecs_target_group_arn  = module.alb[0].alb_target_group_arn
   container_name        = "backend"
   container_image       = "${module.ecr.repository_urls["backend"]}:latest"
   container_port        = 3001
@@ -112,7 +116,7 @@ module "frontend_hosting" {
   project_name           = var.project_name
   environment            = var.environment
   account_id             = data.aws_caller_identity.current.account_id
-  api_origin_domain_name = module.alb.alb_dns_name
+  api_origin_domain_name = var.enable_backend ? module.alb[0].alb_dns_name : null
   api_path_patterns = [
     "/register",
     "/login",
