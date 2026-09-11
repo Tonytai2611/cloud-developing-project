@@ -71,6 +71,18 @@ module "dynamodb" {
   tags                          = local.common_tags
 }
 
+module "websocket_chat" {
+  source = "../../modules/websocket-chat"
+
+  project_name                  = var.project_name
+  environment                   = var.environment
+  aws_region                    = var.aws_region
+  lambda_source_path            = abspath("${path.root}/../../../lambda/chat_handler.py")
+  enable_point_in_time_recovery = true
+  stage_name                    = "production"
+  tags                          = local.common_tags
+}
+
 module "ecs" {
   count = var.enable_backend ? 1 : 0
 

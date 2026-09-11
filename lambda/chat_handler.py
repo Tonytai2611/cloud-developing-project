@@ -7,8 +7,8 @@ from decimal import Decimal
 
 # Initialize AWS clients
 dynamodb = boto3.resource('dynamodb')
-connections_table = dynamodb.Table('CHAT_CONNECTIONS')
-messages_table = dynamodb.Table('CHAT_MESSAGES')
+connections_table = dynamodb.Table(os.environ.get('CHAT_CONNECTIONS_TABLE', 'CHAT_CONNECTIONS'))
+messages_table = dynamodb.Table(os.environ.get('CHAT_MESSAGES_TABLE', 'CHAT_MESSAGES'))
 
 # API Gateway Management API client (for sending messages back to clients)
 # Endpoint will be set from environment variable
