@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { MessageCircle, Eye, EyeOff, Mail, Lock, User, Check, X, UserCircle, Coffee, Phone, ArrowRight, CalendarDays, LoaderCircle, ShieldCheck, LogIn, UserPlus } from "lucide-react";
+import { MessageCircle, Eye, EyeOff, Mail, Lock, User, Check, X, UserCircle, Coffee, Phone, ArrowRight, CalendarDays, LoaderCircle, ShieldCheck, LogIn, UserPlus, ChevronDown, LogOut, Menu as MenuIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import {
     Dialog,
@@ -30,6 +30,8 @@ const Header = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [dialogOpen, setDialogOpen] = useState(false);
+    const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     // Password requirements
     const passwordRequirements = [
@@ -180,6 +182,8 @@ const Header = () => {
     // Handle logout with JWT
     const onLogout = async () => {
         try {
+            setAccountMenuOpen(false);
+            setMobileMenuOpen(false);
             await authLogout();
             toast.success("Logged out successfully");
             navigate("/");
@@ -192,67 +196,89 @@ const Header = () => {
     };
 
     const onUserProfile = () => {
+        setAccountMenuOpen(false);
+        setMobileMenuOpen(false);
         navigate("/user-profile");
+    };
+
+    const closeMenus = () => {
+        setAccountMenuOpen(false);
+        setMobileMenuOpen(false);
     };
 
     return (
         <header className="app-header fixed top-0 z-50 w-full">
-            <nav className="container flex h-[88px] items-center justify-between">
+            <nav className="container relative flex h-20 items-center justify-between" aria-label="Main navigation">
                 <div className="flex items-center gap-4">
                     <Link to="/" className="flex items-center gap-3">
-                        <img src="/logo.png" alt="BrewCraft" className="h-[52px] w-[52px] rounded-xl object-cover shadow-md" />
-                        <span className="text-xl font-bold tracking-tight text-white">BrewCraft</span>
+                        <img src="/logo.png" alt="BrewCraft logo" className="h-[42px] w-[42px] rounded-xl object-cover shadow-md" />
+                        <span className="text-2xl font-bold tracking-tight text-white">BrewCraft</span>
                     </Link>
                 </div>
 
                 <div className="hidden items-center gap-8 lg:flex">
-                    <Link to="/" className="nav-link">
+                    <Link to="/" className="nav-link" onClick={closeMenus}>
                         Home
                     </Link>
-                    <Link to="/menu" className="nav-link">
+                    <Link to="/menu" className="nav-link" onClick={closeMenus}>
                         Menu
                     </Link>
-                    <Link to="/booking" className="nav-link">
+                    <Link to="/booking" className="nav-link" onClick={closeMenus}>
                         Reservation
                     </Link>
-                    <Link to="/#about" className="nav-link">
+                    {user && (
+                        <Link to="/my-bookings" className="nav-link" onClick={closeMenus}>
+                            My Bookings
+                        </Link>
+                    )}
+                    <Link to="/#about" className="nav-link" onClick={closeMenus}>
                         About
                     </Link>
-                    <Link to="/contact-us" className="nav-link">
+                    <Link to="/contact-us" className="nav-link" onClick={closeMenus}>
                         Contact
                     </Link>
                     {user && (
-                        <>
-                            <Link to="/my-bookings" className="nav-link">
-                                My Bookings
-                            </Link>
-                            <Link to="/chat" className="nav-link flex items-center gap-2">
-                                <MessageCircle className="w-5 h-5" />
-                                Chat
-                            </Link>
-                        </>
+                        <Link to="/chat" className="nav-link flex items-center gap-2" onClick={closeMenus}>
+                            <MessageCircle className="h-5 w-5" />
+                            Support
+                        </Link>
                     )}
                 </div>
 
                 <div className="flex items-center gap-3">
                     {user ? (
-                        <div className="flex items-center gap-4">
-                            <div className="user-chip hidden md:block rounded-lg px-4 py-2">
-                                <div className="text-xs text-white/80 font-medium">Welcome back</div>
-                                <div
-                                    onClick={onUserProfile}
-                                    className="font-semibold text-white hover:opacity-90 cursor-pointer transition-opacity flex items-center gap-1.5"
-                                >
-                                    <UserCircle className="w-4 h-4" />
-                                    <span className="max-w-48 truncate">{userDisplayName}</span>
-                                </div>
-                            </div>
-                            <Button
-                                onClick={onLogout}
-                                className="btn-shell px-6 py-2.5 font-semibold"
+                        <div className="relative hidden md:block">
+                            <button
+                                type="button"
+                                className="user-menu-trigger"
+                                aria-haspopup="menu"
+                                aria-expanded={accountMenuOpen}
+                                onClick={() => setAccountMenuOpen((open) => !open)}
                             >
-                                Logout
-                            </Button>
+                                <UserCircle className="h-5 w-5" />
+                                <span className="max-w-36 truncate">{userDisplayName}</span>
+                                <ChevronDown className={`h-4 w-4 transition-transform ${accountMenuOpen ? "rotate-180" : ""}`} />
+                            </button>
+                            {accountMenuOpen && (
+                                <div className="account-menu" role="menu">
+                                    <button type="button" role="menuitem" onClick={onUserProfile}>
+                                        <UserCircle className="h-4 w-4" />
+                                        Profile
+                                    </button>
+                                    <Link to="/my-bookings" role="menuitem" onClick={closeMenus}>
+                                        <CalendarDays className="h-4 w-4" />
+                                        My bookings
+                                    </Link>
+                                    <Link to="/chat" role="menuitem" onClick={closeMenus}>
+                                        <MessageCircle className="h-4 w-4" />
+                                        Support
+                                    </Link>
+                                    <button type="button" role="menuitem" onClick={onLogout} className="account-menu-danger">
+                                        <LogOut className="h-4 w-4" />
+                                        Logout
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -586,7 +612,40 @@ const Header = () => {
                             </DialogContent>
                         </Dialog>
                     )}
+                    <button
+                        type="button"
+                        className="mobile-menu-trigger lg:hidden"
+                        aria-label="Toggle navigation menu"
+                        aria-expanded={mobileMenuOpen}
+                        onClick={() => setMobileMenuOpen((open) => !open)}
+                    >
+                        <MenuIcon className="h-6 w-6" />
+                    </button>
                 </div>
+
+                {mobileMenuOpen && (
+                    <div className="mobile-nav-panel lg:hidden">
+                        <Link to="/" className="mobile-nav-link" onClick={closeMenus}>Home</Link>
+                        <Link to="/menu" className="mobile-nav-link" onClick={closeMenus}>Menu</Link>
+                        <Link to="/booking" className="mobile-nav-link" onClick={closeMenus}>Reservation</Link>
+                        {user && <Link to="/my-bookings" className="mobile-nav-link" onClick={closeMenus}>My Bookings</Link>}
+                        <Link to="/#about" className="mobile-nav-link" onClick={closeMenus}>About</Link>
+                        <Link to="/contact-us" className="mobile-nav-link" onClick={closeMenus}>Contact</Link>
+                        {user && <Link to="/chat" className="mobile-nav-link" onClick={closeMenus}>Support</Link>}
+                        {user && (
+                            <div className="mobile-account-actions">
+                                <button type="button" onClick={onUserProfile}>
+                                    <UserCircle className="h-4 w-4" />
+                                    {userDisplayName}
+                                </button>
+                                <button type="button" onClick={onLogout}>
+                                    <LogOut className="h-4 w-4" />
+                                    Logout
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
             </nav>
         </header>
     );

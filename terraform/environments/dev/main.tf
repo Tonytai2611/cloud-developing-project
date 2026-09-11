@@ -92,6 +92,7 @@ module "ecs" {
     PORT                 = "3001"
     IMAGE_BUCKET         = module.image_bucket.image_bucket_name
     MENU_TABLE           = module.dynamodb.menu_table_name
+    BOOKING_TABLE        = module.dynamodb.bookings_table_name
     TABLES_TABLE         = module.dynamodb.tables_table_name
     USERS_TABLE          = module.dynamodb.users_table_name
   }
@@ -100,6 +101,7 @@ module "ecs" {
   memory          = 512
   users_table_arn = module.dynamodb.users_table_arn
   additional_dynamodb_table_arns = [
+    module.dynamodb.bookings_table_arn,
     module.dynamodb.menu_table_arn,
     module.dynamodb.tables_table_arn
   ]

@@ -17,6 +17,7 @@ const CLIENT_ID = env.cognitoClientId;
 const CLIENT_SECRET = env.cognitoClientSecret;
 const USERS_TABLE = env.usersTable;
 const MENU_TABLE = env.menuTable;
+const BOOKING_TABLE = env.bookingTable;
 const TABLES_TABLE = env.tablesTable;
 const IMAGE_BUCKET = env.imageBucket;
 
@@ -375,6 +376,155 @@ async function generateTableId() {
   }).promise();
   return `TBL-${String((response.Items || []).length + 1).padStart(3, '0')}`;
 }
+
+async function generateBookingId(date) {
+  const normalizedDate = String(date || new Date().toISOString().slice(0, 10)).replace(/-/g, '');
+  const response = await dynamodb.scan({
+    TableName: BOOKING_TABLE,
+    ProjectionExpression: 'id, #date',
+    FilterExpression: '#date = :date',
+    ExpressionAttributeNames: { '#date': 'date' },
+    ExpressionAttributeValues: { ':date': date },
+  }).promise();
+
+  return `BK-${normalizedDate}-${String((response.Items || []).length + 1).padStart(3, '0')}`;
+}
+
+function normalizeBookingPayload(data) {
+  const now = new Date().toISOString();
+  return {
+    id: data.id,
+    userId: data.userId || data.email || 'guest',
+    customerName: data.customerName || data.name || 'Customer',
+    phone: data.phone || '',
+    email: data.email || '',
+    guests: Number(data.guests || 1),
+    tableId: data.tableId || '',
+    tableNumber: data.tableNumber || data.tableId || '',
+    date: data.date,
+    time: data.time,
+    selectedItems: Array.isArray(data.selectedItems) ? data.selectedItems : [],
+    total: Number(data.total || data.totalPrice || 0),
+    totalPrice: Number(data.totalPrice || data.total || 0),
+    specialRequests: data.specialRequests || '',
+    status: data.status || 'PENDING',
+    createdAt: data.createdAt || now,
+    updatedAt: now,
+  };
+}
+
+app.get('/getBooking', async (req, res) => {
+  const tableName = getConfiguredTable(BOOKING_TABLE, res, 'BOOKING_TABLE');
+  if (!tableName) return;
+
+  const { userId } = req.query || {};
+
+  try {
+    const params = userId
+      ? {
+          TableName: tableName,
+          FilterExpression: 'userId = :userId OR email = :userId',
+          ExpressionAttributeValues: { ':userId': userId },
+        }
+      : { TableName: tableName };
+
+    const response = await dynamodb.scan(params).promise();
+    const items = (response.Items || []).sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    return res.json({ message: 'Bookings retrieved successfully', data: items });
+  } catch (error) {
+    console.error('GET /getBooking error:', error);
+    return res.status(500).json({ error: 'Failed to read bookings', detail: error.message });
+  }
+});
+
+app.post('/createBooking', async (req, res) => {
+  const tableName = getConfiguredTable(BOOKING_TABLE, res, 'BOOKING_TABLE');
+  if (!tableName) return;
+
+  const data = req.body || {};
+  if (!data.customerName || !data.phone || !data.email || !data.guests || !data.tableId || !data.date || !data.time) {
+    return res.status(400).json({ error: 'Missing required booking fields' });
+  }
+
+  try {
+    const conflict = await dynamodb.scan({
+      TableName: tableName,
+      FilterExpression: 'tableId = :tableId AND #date = :date AND #time = :time AND #status IN (:pending, :confirmed)',
+      ExpressionAttributeNames: {
+        '#date': 'date',
+        '#time': 'time',
+        '#status': 'status',
+      },
+      ExpressionAttributeValues: {
+        ':tableId': data.tableId,
+        ':date': data.date,
+        ':time': data.time,
+        ':pending': 'PENDING',
+        ':confirmed': 'CONFIRMED',
+      },
+    }).promise();
+
+    if ((conflict.Items || []).length > 0) {
+      return res.status(409).json({ error: 'This table is already booked for the selected date and time' });
+    }
+
+    const id = await generateBookingId(data.date);
+    const booking = normalizeBookingPayload({ ...data, id });
+
+    await dynamodb.put({ TableName: tableName, Item: booking }).promise();
+    return res.status(201).json({ message: 'Booking created successfully', data: booking });
+  } catch (error) {
+    console.error('POST /createBooking error:', error);
+    return res.status(500).json({ error: 'Failed to create booking', detail: error.message });
+  }
+});
+
+app.put('/updateBooking', async (req, res) => {
+  const tableName = getConfiguredTable(BOOKING_TABLE, res, 'BOOKING_TABLE');
+  if (!tableName) return;
+
+  const data = req.body || {};
+  if (!data.id) return res.status(400).json({ error: 'Booking id is required' });
+
+  const update = buildUpdateExpression({ ...data, updatedAt: new Date().toISOString() }, new Set(['status', 'date', 'time']));
+  if (!update.UpdateExpression) return res.status(400).json({ error: 'Nothing to update' });
+
+  try {
+    const params = {
+      TableName: tableName,
+      Key: { id: String(data.id) },
+      UpdateExpression: update.UpdateExpression,
+      ExpressionAttributeValues: update.ExpressionAttributeValues,
+      ReturnValues: 'ALL_NEW',
+    };
+
+    if (Object.keys(update.ExpressionAttributeNames).length > 0) {
+      params.ExpressionAttributeNames = update.ExpressionAttributeNames;
+    }
+
+    const response = await dynamodb.update(params).promise();
+    return res.json({ message: 'Booking updated successfully', data: response.Attributes || {} });
+  } catch (error) {
+    console.error('PUT /updateBooking error:', error);
+    return res.status(500).json({ error: 'Failed to update booking', detail: error.message });
+  }
+});
+
+app.delete('/deleteBooking', async (req, res) => {
+  const tableName = getConfiguredTable(BOOKING_TABLE, res, 'BOOKING_TABLE');
+  if (!tableName) return;
+
+  const { id } = req.body || {};
+  if (!id) return res.status(400).json({ error: 'Booking id is required' });
+
+  try {
+    await dynamodb.delete({ TableName: tableName, Key: { id: String(id) } }).promise();
+    return res.json({ message: 'Booking deleted successfully' });
+  } catch (error) {
+    console.error('DELETE /deleteBooking error:', error);
+    return res.status(500).json({ error: 'Failed to delete booking', detail: error.message });
+  }
+});
 
 app.post('/createTable', async (req, res) => {
   const tableName = getConfiguredTable(TABLES_TABLE, res, 'TABLES_TABLE');

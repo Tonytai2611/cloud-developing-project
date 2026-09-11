@@ -61,11 +61,8 @@ function Layout({ children }) {
     "/admin/chat-with-users"
   ];
 
-  const excludedChatboxPages = ["/user-profile", "/register"];
-
   const showHeader = !noHeaderPages.includes(location.pathname);
-  const showChatbox = !excludedChatboxPages.includes(location.pathname);
-  const paddingTopClass = showHeader ? "pt-[88px]" : "";
+  const paddingTopClass = showHeader ? "pt-20" : "";
 
   return (
     <div className="min-h-screen bg-slate-100 text-black">

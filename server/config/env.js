@@ -12,6 +12,7 @@ const env = {
   cognitoUserPoolId: process.env.COGNITO_USER_POOL_ID,
   usersTable: process.env.USERS_TABLE || process.env.REACT_APP_USERS_TABLE,
   menuTable: process.env.MENU_TABLE,
+  bookingTable: process.env.BOOKING_TABLE || 'BOOKING_FOODS_TABLE',
   tablesTable: process.env.TABLES_TABLE,
   imageBucket: process.env.IMAGE_BUCKET,
   contactHandlerFunctionName: process.env.CONTACT_HANDLER_FUNCTION_NAME,
