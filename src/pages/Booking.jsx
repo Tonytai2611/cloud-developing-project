@@ -34,6 +34,11 @@ export default function Booking() {
     tables,
     totalPrice
   } = useBookingForm({ user, selectedItems, selectedTable });
+  const pageBackground = {
+    backgroundImage: "url('/background.png')",
+    backgroundPosition: 'center top',
+    backgroundSize: 'cover'
+  };
 
   if (success) {
     return (
@@ -50,14 +55,15 @@ export default function Booking() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-10">
+    <div className="min-h-screen bg-[#f8fdfa] bg-fixed pt-28 pb-10" style={pageBackground}>
       <div className="container mx-auto px-4 max-w-6xl">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">Book a Table</h1>
-          <p className="text-gray-600">Select your preferred date and time</p>
+        <div className="mb-8 rounded-3xl bg-white/70 p-6 text-center shadow-sm ring-1 ring-white/80 backdrop-blur">
+          <p className="text-sm font-bold uppercase tracking-[0.28em] text-teal-700">BrewCraft Reservation</p>
+          <h1 className="mt-2 text-4xl font-black text-slate-950 md:text-5xl">Book a Table</h1>
+          <p className="mt-2 text-gray-600">Select your preferred date and time, then we will prepare your table.</p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+        <div className="bg-white/95 rounded-3xl shadow-xl overflow-hidden border border-white/80 backdrop-blur">
           <div className="flex flex-col lg:flex-row">
             <BookingSummary
               selectedDate={selectedDate}

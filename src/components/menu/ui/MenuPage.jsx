@@ -7,19 +7,16 @@ import { useMenuCatalog } from '../hooks/useMenuCatalog';
 export default function Menu() {
     const navigate = useNavigate();
     const {
-        activeImageIndex,
         addToCart,
         cart,
         categories,
         error,
-        featuredImages,
         filteredMenu,
         getTotalPrice,
         loading,
         removeFromCart,
         searchTerm,
         selectedCategory,
-        setActiveImageIndex,
         setSearchTerm,
         setSelectedCategory,
         updateQuantity
@@ -27,6 +24,11 @@ export default function Menu() {
 
     const goToBooking = () => {
         navigate('/booking', { state: { selectedItems: cart } });
+    };
+    const pageBackground = {
+        backgroundImage: "url('/background.png')",
+        backgroundPosition: 'center top',
+        backgroundSize: 'cover'
     };
 
     if (loading) {
@@ -49,19 +51,20 @@ export default function Menu() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-[#f8fdfa] bg-fixed pt-20" style={pageBackground}>
             {/* Header Section */}
-            <div className="bg-gradient-to-r from-[#0F4C4C] to-teal-600 py-12">
+            <div className="py-12">
                 <div className="container mx-auto px-4">
                     <motion.div
                         initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="text-center mb-8"
+                        className="mx-auto mb-8 max-w-5xl rounded-3xl border border-white/70 bg-white/70 px-6 py-7 text-center shadow-sm backdrop-blur"
                     >
-                        <span className="text-teal-200 text-sm tracking-[0.3em] uppercase">Explore Menu Option</span>
-                        <h1 className="text-4xl md:text-5xl font-bold text-white mt-2">
+                        <span className="text-teal-700 text-sm font-bold tracking-[0.3em] uppercase">Explore Our Menu</span>
+                        <h1 className="text-4xl md:text-5xl font-black text-slate-950 mt-2">
                             Our Delicious Menu
                         </h1>
+                        <p className="mx-auto mt-3 max-w-2xl text-slate-600">Fresh ingredients. Great coffee. Memorable moments. Choose your favourite dishes and add them to a reservation in one smooth flow.</p>
                     </motion.div>
 
                     {/* Category Tabs */}
@@ -74,8 +77,8 @@ export default function Menu() {
                                 transition={{ delay: index * 0.1 }}
                                 onClick={() => setSelectedCategory(category)}
                                 className={`px-6 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${selectedCategory === category
-                                    ? 'bg-white text-teal-600 shadow-lg'
-                                    : 'bg-white/20 text-white hover:bg-white/30 border border-white/30'
+                                    ? 'bg-teal-700 text-white shadow-lg'
+                                    : 'bg-white/80 text-slate-700 hover:bg-white border border-teal-100 shadow-sm'
                                     }`}
                             >
                                 {category}
@@ -92,7 +95,7 @@ export default function Menu() {
                                 placeholder="Search dishes..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 bg-white border-0 rounded-full text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-300 shadow-lg transition-all"
+                                className="w-full pl-12 pr-4 py-3 bg-white/95 border border-teal-100 rounded-full text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-300 shadow-lg transition-all"
                             />
                         </div>
                     </div>
@@ -100,86 +103,20 @@ export default function Menu() {
             </div>
 
             {/* Main Content */}
-            <div className="container mx-auto px-4 py-12">
-                <div className="flex flex-col lg:flex-row gap-8">
-                    {/* Left Panel - Featured Images */}
-                    <motion.div
-                        initial={{ opacity: 0, x: -50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="lg:w-2/5"
-                    >
-                        <div className="sticky top-24">
-                            {/* Main Featured Image */}
-                            <div className="relative rounded-3xl overflow-hidden h-[500px] bg-gray-200 shadow-xl">
-                                <AnimatePresence mode="wait">
-                                    {featuredImages.length > 0 && (
-                                        <motion.img
-                                            key={activeImageIndex}
-                                            initial={{ opacity: 0, scale: 1.1 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.9 }}
-                                            transition={{ duration: 0.5 }}
-                                            src={featuredImages[activeImageIndex]}
-                                            alt="Featured dish"
-                                            className="w-full h-full object-cover"
-                                        />
-                                    )}
-                                </AnimatePresence>
-
-                                {/* Overlay Gradient */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-
-                                {/* Image Indicators */}
-                                {featuredImages.length > 1 && (
-                                    <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-2">
-                                        {featuredImages.map((_, idx) => (
-                                            <button
-                                                key={idx}
-                                                onClick={() => setActiveImageIndex(idx)}
-                                                className={`w-2 h-2 rounded-full transition-all ${idx === activeImageIndex
-                                                    ? 'bg-white w-6'
-                                                    : 'bg-white/50 hover:bg-white/70'
-                                                    }`}
-                                            />
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Thumbnail Grid */}
-                            <div className="grid grid-cols-4 gap-3 mt-4">
-                                {featuredImages.slice(0, 4).map((img, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => setActiveImageIndex(idx)}
-                                        className={`aspect-square rounded-xl overflow-hidden border-2 transition-all shadow-md ${idx === activeImageIndex
-                                            ? 'border-teal-500 scale-95'
-                                            : 'border-transparent opacity-70 hover:opacity-100'
-                                            }`}
-                                    >
-                                        <img
-                                            src={img}
-                                            alt={`Dish ${idx + 1}`}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    {/* Right Panel - Menu List */}
+            <div className="container mx-auto max-w-7xl px-4 pb-12">
+                <div>
+                    {/* Menu Grid */}
                     <motion.div
                         initial={{ opacity: 0, x: 50 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="lg:w-3/5"
+                        className="w-full"
                     >
                         {filteredMenu.length === 0 ? (
-                            <div className="text-center py-20">
+                            <div className="rounded-3xl bg-white/80 py-20 text-center shadow-sm backdrop-blur">
                                 <p className="text-xl text-gray-500">No dishes found</p>
                             </div>
                         ) : (
-                            <div className="space-y-4">
+                            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
                                 <AnimatePresence>
                                     {filteredMenu.map((item, index) => (
                                         <motion.div
@@ -188,75 +125,37 @@ export default function Menu() {
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0, y: -20 }}
                                             transition={{ delay: index * 0.05 }}
-                                            className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-gray-100 hover:border-teal-200 transition-all overflow-hidden"
+                                            className="group overflow-hidden rounded-2xl border border-white/80 bg-white/95 shadow-lg transition-all hover:-translate-y-1 hover:border-teal-200 hover:shadow-xl backdrop-blur"
                                         >
-                                            <div className="p-4">
-                                                <div className="flex gap-4">
-                                                    {/* Dish Image */}
-                                                    <div className="relative w-28 h-28 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
-                                                        <img
-                                                            src={item.image || 'https://placehold.co/200/f3f4f6/0F4C4C?text=No+Image'}
-                                                            alt={item.name}
-                                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                                                        />
-
-                                                    </div>
-
-                                                    {/* Dish Info */}
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-start justify-between gap-4">
-                                                            <div className="flex-1">
-                                                                <h3 className="text-lg font-semibold text-gray-800 group-hover:text-teal-600 transition-colors">
-                                                                    {item.name}
-                                                                </h3>
-                                                                <p className="text-gray-500 text-sm mt-1 line-clamp-2">
-                                                                    {item.description || 'Món ngon từ thực đơn của chúng tôi'}
-                                                                </p>
-
-
-                                                            </div>
-                                                            <div className="text-right flex-shrink-0">
-                                                                <p className="text-xl font-bold text-teal-600">
-                                                                    {item.price?.toLocaleString('vi-VN')}₫
-                                                                </p>
-                                                            </div>
+                                            <div className="relative h-40 overflow-hidden bg-gray-100">
+                                                <img
+                                                    src={item.image || 'https://placehold.co/400x260/f3f4f6/0F4C4C?text=BrewCraft'}
+                                                    alt={item.name}
+                                                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                />
+                                                <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-teal-800 shadow-sm">
+                                                    {item.category || selectedCategory}
+                                                </span>
+                                            </div>
+                                            <div className="p-5">
+                                                <h3 className="text-lg font-black text-slate-950 transition-colors group-hover:text-teal-700">{item.name}</h3>
+                                                <p className="mt-2 min-h-12 text-sm leading-6 text-slate-600 line-clamp-2">{item.description || 'Freshly prepared from the BrewCraft kitchen'}</p>
+                                                <div className="mt-4 flex items-center justify-between gap-3">
+                                                    <p className="text-lg font-black text-teal-700">{item.price?.toLocaleString('vi-VN')}₫</p>
+                                                    {cart.find(i => i.id === item.id) ? (
+                                                        <div className="flex items-center gap-2 rounded-full bg-teal-50 p-1">
+                                                            <button onClick={() => updateQuantity(item.id, cart.find(i => i.id === item.id).quantity - 1)} className="grid h-8 w-8 place-items-center rounded-full bg-teal-100 text-teal-700 hover:bg-teal-600 hover:text-white"><Minus className="h-4 w-4" /></button>
+                                                            <span className="w-7 text-center font-bold text-teal-800">{cart.find(i => i.id === item.id).quantity}</span>
+                                                            <button onClick={() => updateQuantity(item.id, cart.find(i => i.id === item.id).quantity + 1)} className="grid h-8 w-8 place-items-center rounded-full bg-teal-600 text-white hover:bg-teal-700"><Plus className="h-4 w-4" /></button>
                                                         </div>
-
-                                                        {/* Add to Cart Button */}
-                                                        <div className="flex items-center justify-end mt-3">
-                                                            {cart.find(i => i.id === item.id) ? (
-                                                                <div className="flex items-center gap-2 bg-teal-50 rounded-full p-1">
-                                                                    <button
-                                                                        onClick={() => updateQuantity(item.id, cart.find(i => i.id === item.id).quantity - 1)}
-                                                                        className="w-8 h-8 rounded-full bg-teal-100 text-teal-600 hover:bg-teal-500 hover:text-white transition-colors flex items-center justify-center"
-                                                                    >
-                                                                        <Minus className="w-4 h-4" />
-                                                                    </button>
-                                                                    <span className="w-8 text-center text-teal-700 font-semibold">
-                                                                        {cart.find(i => i.id === item.id).quantity}
-                                                                    </span>
-                                                                    <button
-                                                                        onClick={() => updateQuantity(item.id, cart.find(i => i.id === item.id).quantity + 1)}
-                                                                        className="w-8 h-8 rounded-full bg-teal-500 text-white hover:bg-teal-600 transition-colors flex items-center justify-center"
-                                                                    >
-                                                                        <Plus className="w-4 h-4" />
-                                                                    </button>
-                                                                </div>
-                                                            ) : (
-                                                                <button
-                                                                    onClick={() => addToCart(item)}
-                                                                    className="flex items-center gap-2 px-4 py-2 bg-teal-50 text-teal-600 rounded-full hover:bg-teal-500 hover:text-white transition-all text-sm font-medium border border-teal-200 hover:border-teal-500"
-                                                                >
-                                                                    <Plus className="w-4 h-4" />
-                                                                    Make orders
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
+                                                    ) : (
+                                                        <button onClick={() => addToCart(item)} className="inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-full border border-teal-200 bg-teal-50 px-4 text-sm font-bold text-teal-700 hover:bg-teal-600 hover:text-white">
+                                                            <Plus className="h-4 w-4" />
+                                                            Add
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
-
-
                                         </motion.div>
                                     ))}
                                 </AnimatePresence>

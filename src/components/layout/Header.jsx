@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { MessageCircle, Eye, EyeOff, Mail, Lock, User, Check, X, UserCircle, Coffee, Phone, ArrowRight, CalendarDays, LoaderCircle, ShieldCheck, LogIn, UserPlus, ChevronDown, LogOut, Menu as MenuIcon } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Check, X, UserCircle, Coffee, Phone, ArrowRight, CalendarDays, LoaderCircle, ShieldCheck, LogIn, UserPlus, ChevronDown, LogOut, Menu as MenuIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import {
     Dialog,
@@ -216,7 +216,7 @@ const Header = () => {
                     </Link>
                 </div>
 
-                <div className="hidden items-center gap-8 lg:flex">
+                <div className="hidden items-center gap-7 lg:flex">
                     <Link to="/" className="nav-link" onClick={closeMenus}>
                         Home
                     </Link>
@@ -231,17 +231,15 @@ const Header = () => {
                             My Bookings
                         </Link>
                     )}
-                    <Link to="/#about" className="nav-link" onClick={closeMenus}>
-                        About
-                    </Link>
-                    <Link to="/contact-us" className="nav-link" onClick={closeMenus}>
-                        Contact
-                    </Link>
-                    {user && (
-                        <Link to="/chat" className="nav-link flex items-center gap-2" onClick={closeMenus}>
-                            <MessageCircle className="h-5 w-5" />
-                            Support
-                        </Link>
+                    {!user && (
+                        <>
+                            <Link to="/#about" className="nav-link" onClick={closeMenus}>
+                                About
+                            </Link>
+                            <Link to="/contact-us" className="nav-link" onClick={closeMenus}>
+                                Contact
+                            </Link>
+                        </>
                     )}
                 </div>
 
@@ -265,14 +263,6 @@ const Header = () => {
                                         <UserCircle className="h-4 w-4" />
                                         Profile
                                     </button>
-                                    <Link to="/my-bookings" role="menuitem" onClick={closeMenus}>
-                                        <CalendarDays className="h-4 w-4" />
-                                        My bookings
-                                    </Link>
-                                    <Link to="/chat" role="menuitem" onClick={closeMenus}>
-                                        <MessageCircle className="h-4 w-4" />
-                                        Support
-                                    </Link>
                                     <button type="button" role="menuitem" onClick={onLogout} className="account-menu-danger">
                                         <LogOut className="h-4 w-4" />
                                         Logout
@@ -283,7 +273,8 @@ const Header = () => {
                     ) : (
                         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                             <DialogTrigger asChild>
-                                <Button className="auth-trigger min-w-24 border-amber-300/80 px-6 py-2.5 font-bold hover:!translate-y-0 active:!translate-y-0">
+                                <Button className="auth-trigger inline-flex h-11 min-w-24 items-center justify-center gap-2 rounded-xl border-amber-300/80 px-5 py-2.5 font-bold hover:!translate-y-0 active:!translate-y-0">
+                                    <LogIn className="h-4 w-4" aria-hidden="true" />
                                     Login
                                 </Button>
                             </DialogTrigger>
@@ -629,14 +620,13 @@ const Header = () => {
                         <Link to="/menu" className="mobile-nav-link" onClick={closeMenus}>Menu</Link>
                         <Link to="/booking" className="mobile-nav-link" onClick={closeMenus}>Reservation</Link>
                         {user && <Link to="/my-bookings" className="mobile-nav-link" onClick={closeMenus}>My Bookings</Link>}
-                        <Link to="/#about" className="mobile-nav-link" onClick={closeMenus}>About</Link>
-                        <Link to="/contact-us" className="mobile-nav-link" onClick={closeMenus}>Contact</Link>
-                        {user && <Link to="/chat" className="mobile-nav-link" onClick={closeMenus}>Support</Link>}
+                        {!user && <Link to="/#about" className="mobile-nav-link" onClick={closeMenus}>About</Link>}
+                        {!user && <Link to="/contact-us" className="mobile-nav-link" onClick={closeMenus}>Contact</Link>}
                         {user && (
                             <div className="mobile-account-actions">
                                 <button type="button" onClick={onUserProfile}>
                                     <UserCircle className="h-4 w-4" />
-                                    {userDisplayName}
+                                    Profile
                                 </button>
                                 <button type="button" onClick={onLogout}>
                                     <LogOut className="h-4 w-4" />

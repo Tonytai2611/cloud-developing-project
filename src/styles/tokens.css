@@ -256,7 +256,7 @@
     position: absolute;
     right: 0;
     top: calc(100% + 0.75rem);
-    min-width: 220px;
+    min-width: 180px;
     overflow: hidden;
     border: 1px solid rgba(216, 227, 225, 0.92);
     border-radius: 14px;

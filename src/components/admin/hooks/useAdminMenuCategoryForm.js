@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { menuApi } from '../../menu/services/menuApi';
 
-const emptyDish = { name: '', description: '', price: '', image: '' };
+const createEmptyDish = () => ({ name: '', description: '', price: '', image: '' });
 
 export function useAdminMenuCategoryForm({ id, navigate }) {
   const [loading, setLoading] = useState(false);
@@ -12,7 +12,7 @@ export function useAdminMenuCategoryForm({ id, navigate }) {
     title: '',
     dishes: []
   });
-  const [dishes, setDishes] = useState([emptyDish]);
+  const [dishes, setDishes] = useState([createEmptyDish()]);
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState({});
 
@@ -50,9 +50,9 @@ export function useAdminMenuCategoryForm({ id, navigate }) {
     setIsUploading(true);
     try {
       const result = await menuApi.uploadImage(file);
-      const newDishes = [...dishes];
-      newDishes[index].image = result.url;
-      setDishes(newDishes);
+      setDishes((current) => current.map((dish, dishIndex) => (
+        dishIndex === index ? { ...dish, image: result.url } : dish
+      )));
       toast.success("Image uploaded successfully!");
     } catch (error) {
       console.error('Upload error:', error);
@@ -65,9 +65,9 @@ export function useAdminMenuCategoryForm({ id, navigate }) {
   };
 
   const removeImage = (index) => {
-    const newDishes = [...dishes];
-    newDishes[index].image = '';
-    setDishes(newDishes);
+    setDishes((current) => current.map((dish, dishIndex) => (
+      dishIndex === index ? { ...dish, image: '' } : dish
+    )));
   };
 
   const fetchMenuData = useCallback(async () => {
@@ -78,7 +78,7 @@ export function useAdminMenuCategoryForm({ id, navigate }) {
 
       if (menu) {
         setFormData(menu);
-        setDishes(menu.dishes || [emptyDish]);
+        setDishes(menu.dishes?.length ? menu.dishes.map((dish) => ({ ...createEmptyDish(), ...dish })) : [createEmptyDish()]);
         setIsEditMode(true);
       }
     } catch (error) {
@@ -97,14 +97,14 @@ export function useAdminMenuCategoryForm({ id, navigate }) {
   }, [fetchMenuData, id]);
 
   const handleDishInputChange = (index, field, value) => {
-    const newDishes = [...dishes];
-    newDishes[index][field] = value;
-    setDishes(newDishes);
+    setDishes((current) => current.map((dish, dishIndex) => (
+      dishIndex === index ? { ...dish, [field]: value } : dish
+    )));
   };
 
   const handleAddDish = () => {
     if (dishes.length < 6) {
-      setDishes([...dishes, emptyDish]);
+      setDishes((current) => [...current, createEmptyDish()]);
     } else {
       toast.warning("Maximum dishes reached", {
         description: "Cannot add more than 6 dishes per category"

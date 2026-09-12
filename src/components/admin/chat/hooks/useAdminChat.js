@@ -46,15 +46,19 @@ export function useAdminChat() {
       return undefined;
     }
 
-    const socket = new WebSocket(`${env.websocketUrl}?userId=${adminEmail}&role=admin`);
+    const socket = new WebSocket(`${env.websocketUrl}?userId=${encodeURIComponent(adminEmail)}&role=admin`);
     socketRef.current = socket;
     setLoading(true);
+    let customerLookupTimer;
 
     socket.onopen = () => {
       setIsConnected(true);
       setLoading(false);
       socket.send(JSON.stringify({ action: 'getConversations', adminEmail }));
       socket.send(JSON.stringify({ action: 'getUsers', role: 'customer' }));
+      customerLookupTimer = window.setInterval(() => {
+        if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ action: 'getUsers', role: 'customer' }));
+      }, 5000);
     };
 
     socket.onmessage = (event) => {
@@ -98,6 +102,7 @@ export function useAdminChat() {
     socket.onerror = () => setLoading(false);
     socket.onclose = () => setIsConnected(false);
     return () => {
+      if (customerLookupTimer) window.clearInterval(customerLookupTimer);
       socketRef.current = null;
       socket.close();
     };
