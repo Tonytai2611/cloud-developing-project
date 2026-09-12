@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Mail, Lock, User, Check, X, UserCircle, Coffee, Phone, ArrowRight, CalendarDays, LoaderCircle, ShieldCheck, LogIn, UserPlus, ChevronDown, LogOut, Menu as MenuIcon } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Check, X, UserCircle, Coffee, Phone, ArrowRight, CalendarDays, LoaderCircle, ShieldCheck, LogIn, UserPlus, ChevronDown, LogOut, Heart, Settings, Menu as MenuIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import {
     Dialog,
@@ -263,6 +263,14 @@ const Header = () => {
                                         <UserCircle className="h-4 w-4" />
                                         Profile
                                     </button>
+                                    <Link to="/my-favourites" role="menuitem" onClick={closeMenus}>
+                                        <Heart className="h-4 w-4" />
+                                        My Favourites
+                                    </Link>
+                                    <Link to="/user-profile#settings" role="menuitem" onClick={closeMenus}>
+                                        <Settings className="h-4 w-4" />
+                                        Settings
+                                    </Link>
                                     <button type="button" role="menuitem" onClick={onLogout} className="account-menu-danger">
                                         <LogOut className="h-4 w-4" />
                                         Logout
@@ -628,6 +636,14 @@ const Header = () => {
                                     <UserCircle className="h-4 w-4" />
                                     Profile
                                 </button>
+                                <Link to="/my-favourites" className="mobile-nav-link" onClick={closeMenus}>
+                                    <Heart className="h-4 w-4" />
+                                    My Favourites
+                                </Link>
+                                <Link to="/user-profile#settings" className="mobile-nav-link" onClick={closeMenus}>
+                                    <Settings className="h-4 w-4" />
+                                    Settings
+                                </Link>
                                 <button type="button" onClick={onLogout}>
                                     <LogOut className="h-4 w-4" />
                                     Logout

@@ -14,6 +14,7 @@ const env = {
   menuTable: process.env.MENU_TABLE,
   bookingTable: process.env.BOOKING_TABLE || 'BOOKING_FOODS_TABLE',
   tablesTable: process.env.TABLES_TABLE,
+  favoritesTable: process.env.FAVORITES_TABLE,
   imageBucket: process.env.IMAGE_BUCKET,
   contactHandlerFunctionName: process.env.CONTACT_HANDLER_FUNCTION_NAME,
   uploadImageFunctionName: process.env.UPLOAD_IMAGE_FUNCTION_NAME,

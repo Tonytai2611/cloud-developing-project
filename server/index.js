@@ -7,7 +7,7 @@ const { env, warnMissingRuntimeConfig } = require('./config/env');
 const { invokeJsonLambda } = require('./services/lambdaInvoker.service');
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '12mb' }));
 
 warnMissingRuntimeConfig();
@@ -19,6 +19,7 @@ const USERS_TABLE = env.usersTable;
 const MENU_TABLE = env.menuTable;
 const BOOKING_TABLE = env.bookingTable;
 const TABLES_TABLE = env.tablesTable;
+const FAVORITES_TABLE = env.favoritesTable;
 const IMAGE_BUCKET = env.imageBucket;
 
 function getConfiguredTable(tableName, res, label) {
@@ -27,6 +28,16 @@ function getConfiguredTable(tableName, res, label) {
     return null;
   }
   return tableName;
+}
+
+function getCurrentUserId(req) {
+  try {
+    const cookies = parse(req.headers.cookie || '');
+    const userInfo = cookies.userInfo ? JSON.parse(cookies.userInfo) : null;
+    return userInfo?.username || userInfo?.email || null;
+  } catch {
+    return null;
+  }
 }
 
 function buildUpdateExpression(data, reservedNames = new Set()) {
@@ -366,6 +377,59 @@ app.get('/getTable', async (req, res) => {
   } catch (error) {
     console.error('GET /getTable error:', error);
     return res.status(500).json({ error: 'Failed to read tables', detail: error.message });
+  }
+});
+
+// User favourites are scoped by the authenticated user's username.
+app.get('/favorites', async (req, res) => {
+  const tableName = getConfiguredTable(FAVORITES_TABLE, res, 'FAVORITES_TABLE');
+  if (!tableName) return;
+  const userId = getCurrentUserId(req);
+  if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+  try {
+    const response = await dynamodb.query({
+      TableName: tableName,
+      KeyConditionExpression: 'userId = :userId',
+      ExpressionAttributeValues: { ':userId': userId.toLowerCase() },
+    }).promise();
+    return res.json({ data: response.Items || [] });
+  } catch (error) {
+    console.error('GET /favorites error:', error);
+    return res.status(500).json({ error: 'Failed to read favourites', detail: error.message });
+  }
+});
+
+app.post('/favorites', async (req, res) => {
+  const tableName = getConfiguredTable(FAVORITES_TABLE, res, 'FAVORITES_TABLE');
+  if (!tableName) return;
+  const userId = getCurrentUserId(req);
+  if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+  const { dishId, dish } = req.body || {};
+  if (!dishId) return res.status(400).json({ error: 'dishId is required' });
+
+  try {
+    const item = { userId: userId.toLowerCase(), dishId: String(dishId), ...(dish || {}), savedAt: new Date().toISOString() };
+    await dynamodb.put({ TableName: tableName, Item: item }).promise();
+    return res.status(201).json({ data: item });
+  } catch (error) {
+    console.error('POST /favorites error:', error);
+    return res.status(500).json({ error: 'Failed to save favourite', detail: error.message });
+  }
+});
+
+app.delete('/favorites/:dishId', async (req, res) => {
+  const tableName = getConfiguredTable(FAVORITES_TABLE, res, 'FAVORITES_TABLE');
+  if (!tableName) return;
+  const userId = getCurrentUserId(req);
+  if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+  try {
+    await dynamodb.delete({ TableName: tableName, Key: { userId: userId.toLowerCase(), dishId: String(req.params.dishId) } }).promise();
+    return res.json({ message: 'Favourite removed' });
+  } catch (error) {
+    console.error('DELETE /favorites error:', error);
+    return res.status(500).json({ error: 'Failed to remove favourite', detail: error.message });
   }
 });
 

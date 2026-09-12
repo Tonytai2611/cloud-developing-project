@@ -59,6 +59,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await fetch(`${API_URL}/login`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
@@ -109,6 +110,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       const response = await fetch(`${API_URL}/me`, {
+        credentials: 'include',
         headers: {
           'Authorization': `Bearer ${token}`
         }

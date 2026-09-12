@@ -57,7 +57,7 @@ export default function Booking() {
   return (
     <div className="min-h-screen bg-[#f8fdfa] bg-fixed pt-28 pb-10" style={pageBackground}>
       <div className="container mx-auto px-4 max-w-6xl">
-        <div className="mb-8 rounded-3xl bg-white/70 p-6 text-center shadow-sm ring-1 ring-white/80 backdrop-blur">
+        <div className="mb-8 px-4 text-center">
           <p className="text-sm font-bold uppercase tracking-[0.28em] text-teal-700">BrewCraft Reservation</p>
           <h1 className="mt-2 text-4xl font-black text-slate-950 md:text-5xl">Book a Table</h1>
           <p className="mt-2 text-gray-600">Select your preferred date and time, then we will prepare your table.</p>

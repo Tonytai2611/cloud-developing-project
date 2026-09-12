@@ -1,26 +1,61 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Search, Plus, Minus, X, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Search, Plus, Minus, X, ChevronRight, Heart, CalendarDays } from 'lucide-react';
 import { useMenuCatalog } from '../hooks/useMenuCatalog';
+import { useAuth } from '../../../hooks/useAuth';
+
+function FavoriteButton({ item, favoriteIds, toggleFavorite }) {
+    const isFavorite = favoriteIds.includes(item.id);
+    return <button type="button" aria-label={`${isFavorite ? 'Remove' : 'Add'} ${item.name} ${isFavorite ? 'from' : 'to'} favorites`} onClick={() => toggleFavorite(item.id)} className={`grid h-9 w-9 place-items-center rounded-full shadow-sm transition ${isFavorite ? 'bg-teal-700 text-white' : 'bg-white/95 text-slate-800 hover:bg-white'}`}><Heart className="h-4 w-4" fill={isFavorite ? 'currentColor' : 'none'} /></button>;
+}
+
+function AddToBooking({ item, cart, addToCart, updateQuantity }) {
+    const selected = cart.find((cartItem) => cartItem.id === item.id);
+    if (selected) return <div className="flex items-center gap-1 rounded-full bg-teal-50 p-1"><button type="button" aria-label={`Remove one ${item.name}`} onClick={() => updateQuantity(item.id, selected.quantity - 1)} className="grid h-8 w-8 place-items-center rounded-full bg-teal-100 text-teal-700 hover:bg-teal-600 hover:text-white"><Minus className="h-4 w-4" /></button><span className="w-6 text-center text-sm font-bold text-teal-800">{selected.quantity}</span><button type="button" aria-label={`Add one ${item.name}`} onClick={() => updateQuantity(item.id, selected.quantity + 1)} className="grid h-8 w-8 place-items-center rounded-full bg-teal-700 text-white hover:bg-teal-800"><Plus className="h-4 w-4" /></button></div>;
+    return <button type="button" onClick={() => addToCart(item)} className="inline-flex h-10 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-teal-200 bg-teal-50 px-3 text-xs font-bold text-teal-700 transition hover:bg-teal-700 hover:text-white sm:text-sm"><CalendarDays className="h-4 w-4" />Add to Booking</button>;
+}
+
+function PriceAndAction({ item, cart, addToCart, updateQuantity }) {
+    return <div className="mt-4 flex min-w-0 items-center justify-between gap-2"><p className="whitespace-nowrap text-base font-black text-teal-700 sm:text-lg">{item.price?.toLocaleString('vi-VN')}₫</p><AddToBooking item={item} cart={cart} addToCart={addToCart} updateQuantity={updateQuantity} /></div>;
+}
+
+function FeaturedDish({ item, cart, favoriteIds, toggleFavorite, addToCart, updateQuantity }) {
+    return <motion.article initial={{ opacity: 0, x: -14 }} animate={{ opacity: 1, x: 0 }} className="group grid overflow-hidden rounded-2xl border border-white/90 bg-white/95 shadow-lg backdrop-blur sm:grid-cols-2 lg:min-h-[330px]">
+        <div className="relative min-h-[230px] overflow-hidden sm:min-h-full"><img src={item.image || '/cafe.jpg'} alt={item.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /><span className="absolute left-4 top-4 rounded-full bg-teal-800/90 px-3 py-1 text-xs font-bold text-white">Featured</span><div className="absolute right-4 top-4"><FavoriteButton item={item} favoriteIds={favoriteIds} toggleFavorite={toggleFavorite} /></div></div>
+        <div className="flex flex-col justify-center p-6 sm:p-7"><p className="text-xs font-bold uppercase tracking-[0.18em] text-teal-700">{item.category || 'Chef selection'}</p><h2 className="mt-2 text-2xl font-black text-slate-950">{item.name}</h2><p className="mt-3 text-sm leading-6 text-slate-600">{item.description || 'Freshly prepared from the BrewCraft kitchen.'}</p><div className="mt-auto pt-6"><PriceAndAction item={item} cart={cart} addToCart={addToCart} updateQuantity={updateQuantity} /></div></div>
+    </motion.article>;
+}
+
+function CompactDish({ item, cart, favoriteIds, toggleFavorite, addToCart, updateQuantity, compact = false }) {
+    return <motion.article initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`group grid min-w-0 overflow-hidden rounded-2xl border border-white/90 bg-white/95 shadow-md backdrop-blur transition hover:-translate-y-0.5 hover:shadow-lg ${compact ? 'sm:grid-cols-[112px_minmax(0,1fr)]' : 'sm:grid-cols-[112px_minmax(0,1fr)]'}`}>
+        <div className="relative min-h-[112px] overflow-hidden"><img src={item.image || '/cafe.jpg'} alt={item.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /><div className="absolute right-2 top-2"><FavoriteButton item={item} favoriteIds={favoriteIds} toggleFavorite={toggleFavorite} /></div></div>
+        <div className="flex min-w-0 flex-col justify-center p-4"><p className="truncate text-base font-black text-slate-950">{item.name}</p><p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600">{item.description || 'Freshly prepared from the BrewCraft kitchen.'}</p><div className="mt-3 flex min-w-0 items-center justify-between gap-2"><p className="whitespace-nowrap text-sm font-black text-teal-700">{item.price?.toLocaleString('vi-VN')}₫</p><AddToBooking item={item} cart={cart} addToCart={addToCart} updateQuantity={updateQuantity} /></div></div>
+    </motion.article>;
+}
 
 export default function Menu() {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const {
         addToCart,
         cart,
         categories,
         error,
         filteredMenu,
+        favoriteIds,
         getTotalPrice,
         loading,
         removeFromCart,
         searchTerm,
+        priceRange,
         selectedCategory,
         setSearchTerm,
+        setPriceRange,
         setSelectedCategory,
+        toggleFavorite,
         updateQuantity
-    } = useMenuCatalog();
+    } = useMenuCatalog(user);
 
     const goToBooking = () => {
         navigate('/booking', { state: { selectedItems: cart } });
@@ -52,117 +87,34 @@ export default function Menu() {
 
     return (
         <div className="min-h-screen bg-[#f8fdfa] bg-fixed pt-20" style={pageBackground}>
-            {/* Header Section */}
-            <div className="py-12">
-                <div className="container mx-auto px-4">
-                    <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="mx-auto mb-8 max-w-5xl rounded-3xl border border-white/70 bg-white/70 px-6 py-7 text-center shadow-sm backdrop-blur"
-                    >
-                        <span className="text-teal-700 text-sm font-bold tracking-[0.3em] uppercase">Explore Our Menu</span>
-                        <h1 className="text-4xl md:text-5xl font-black text-slate-950 mt-2">
-                            Our Delicious Menu
-                        </h1>
-                        <p className="mx-auto mt-3 max-w-2xl text-slate-600">Fresh ingredients. Great coffee. Memorable moments. Choose your favourite dishes and add them to a reservation in one smooth flow.</p>
-                    </motion.div>
+            <div className="container mx-auto max-w-7xl px-4 pb-12 pt-8 sm:pt-10">
+                <motion.section initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-5xl text-center">
+                    <p className="text-xs font-bold uppercase tracking-[0.35em] text-teal-700">Explore Our Menu</p>
+                    <h1 className="mt-2 text-4xl font-black tracking-tight text-slate-950 sm:text-5xl">Our Delicious Menu</h1>
+                    <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">Fresh ingredients. Great coffee. Memorable moments. Choose your favourite dishes and add them to a reservation in one smooth flow.</p>
+                </motion.section>
 
-                    {/* Category Tabs */}
-                    <div className="flex flex-wrap justify-center gap-3">
-                        {categories.map((category, index) => (
-                            <motion.button
-                                key={category}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.1 }}
-                                onClick={() => setSelectedCategory(category)}
-                                className={`px-6 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${selectedCategory === category
-                                    ? 'bg-teal-700 text-white shadow-lg'
-                                    : 'bg-white/80 text-slate-700 hover:bg-white border border-teal-100 shadow-sm'
-                                    }`}
-                            >
-                                {category}
-                            </motion.button>
-                        ))}
-                    </div>
+                <div className="mx-auto mt-8 flex max-w-4xl flex-wrap justify-center gap-2">
+                    {categories.map((category) => <button type="button" key={category} onClick={() => setSelectedCategory(category)} className={`rounded-full border px-5 py-2.5 text-sm font-semibold transition ${selectedCategory === category ? 'border-teal-700 bg-teal-700 text-white shadow-md' : 'border-teal-100 bg-white/85 text-slate-700 hover:border-teal-300 hover:bg-white'}`}>{category}</button>)}
+                </div>
+                <div className="mx-auto mt-3 flex max-w-4xl flex-wrap items-center justify-center gap-2 text-sm">
+                    <span className="mr-1 font-semibold text-slate-600">Price range</span>
+                    {[['ALL', 'All'], ['UNDER_50', 'Under 50k'], ['50_100', '50k - 100k'], ['ABOVE_100', 'Above 100k']].map(([value, label]) => <button type="button" key={value} onClick={() => setPriceRange(value)} className={`rounded-full border px-4 py-2 text-xs font-semibold transition ${priceRange === value ? 'border-teal-600 bg-teal-50 text-teal-800' : 'border-slate-200 bg-white/70 text-slate-600 hover:bg-white'}`}>{label}</button>)}
+                </div>
+                <div className="mx-auto mt-5 max-w-xl"><div className="relative"><Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" /><input type="text" placeholder="Search dishes, coffee, or anything delicious..." value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="w-full rounded-full border border-teal-100 bg-white/95 py-3.5 pl-12 pr-5 text-sm text-slate-800 shadow-lg outline-none placeholder:text-slate-400 focus:border-teal-300 focus:ring-2 focus:ring-teal-200" /></div></div>
 
-                    {/* Search Bar */}
-                    <div className="max-w-md mx-auto mt-6">
-                        <div className="relative">
-                            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                            <input
-                                type="text"
-                                placeholder="Search dishes..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 bg-white/95 border border-teal-100 rounded-full text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-300 shadow-lg transition-all"
-                            />
+                {filteredMenu.length === 0 ? <div className="mt-10 rounded-2xl bg-white/85 py-20 text-center shadow-sm"><p className="text-lg text-slate-500">No dishes found</p></div> : <>
+                    <div className="mt-10 grid gap-5 lg:grid-cols-2">
+                        <FeaturedDish item={filteredMenu[0]} cart={cart} favoriteIds={favoriteIds} toggleFavorite={toggleFavorite} addToCart={addToCart} updateQuantity={updateQuantity} />
+                        <div className="grid gap-5 sm:grid-cols-2">
+                            {filteredMenu.slice(1, 5).map((item) => <CompactDish key={item.id} item={item} cart={cart} favoriteIds={favoriteIds} toggleFavorite={toggleFavorite} addToCart={addToCart} updateQuantity={updateQuantity} />)}
                         </div>
                     </div>
-                </div>
-            </div>
-
-            {/* Main Content */}
-            <div className="container mx-auto max-w-7xl px-4 pb-12">
-                <div>
-                    {/* Menu Grid */}
-                    <motion.div
-                        initial={{ opacity: 0, x: 50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="w-full"
-                    >
-                        {filteredMenu.length === 0 ? (
-                            <div className="rounded-3xl bg-white/80 py-20 text-center shadow-sm backdrop-blur">
-                                <p className="text-xl text-gray-500">No dishes found</p>
-                            </div>
-                        ) : (
-                            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-                                <AnimatePresence>
-                                    {filteredMenu.map((item, index) => (
-                                        <motion.div
-                                            key={item.id}
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -20 }}
-                                            transition={{ delay: index * 0.05 }}
-                                            className="group overflow-hidden rounded-2xl border border-white/80 bg-white/95 shadow-lg transition-all hover:-translate-y-1 hover:border-teal-200 hover:shadow-xl backdrop-blur"
-                                        >
-                                            <div className="relative h-40 overflow-hidden bg-gray-100">
-                                                <img
-                                                    src={item.image || 'https://placehold.co/400x260/f3f4f6/0F4C4C?text=BrewCraft'}
-                                                    alt={item.name}
-                                                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                                />
-                                                <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-teal-800 shadow-sm">
-                                                    {item.category || selectedCategory}
-                                                </span>
-                                            </div>
-                                            <div className="p-5">
-                                                <h3 className="text-lg font-black text-slate-950 transition-colors group-hover:text-teal-700">{item.name}</h3>
-                                                <p className="mt-2 min-h-12 text-sm leading-6 text-slate-600 line-clamp-2">{item.description || 'Freshly prepared from the BrewCraft kitchen'}</p>
-                                                <div className="mt-4 flex items-center justify-between gap-3">
-                                                    <p className="text-lg font-black text-teal-700">{item.price?.toLocaleString('vi-VN')}₫</p>
-                                                    {cart.find(i => i.id === item.id) ? (
-                                                        <div className="flex items-center gap-2 rounded-full bg-teal-50 p-1">
-                                                            <button onClick={() => updateQuantity(item.id, cart.find(i => i.id === item.id).quantity - 1)} className="grid h-8 w-8 place-items-center rounded-full bg-teal-100 text-teal-700 hover:bg-teal-600 hover:text-white"><Minus className="h-4 w-4" /></button>
-                                                            <span className="w-7 text-center font-bold text-teal-800">{cart.find(i => i.id === item.id).quantity}</span>
-                                                            <button onClick={() => updateQuantity(item.id, cart.find(i => i.id === item.id).quantity + 1)} className="grid h-8 w-8 place-items-center rounded-full bg-teal-600 text-white hover:bg-teal-700"><Plus className="h-4 w-4" /></button>
-                                                        </div>
-                                                    ) : (
-                                                        <button onClick={() => addToCart(item)} className="inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-full border border-teal-200 bg-teal-50 px-4 text-sm font-bold text-teal-700 hover:bg-teal-600 hover:text-white">
-                                                            <Plus className="h-4 w-4" />
-                                                            Add
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </motion.div>
-                                    ))}
-                                </AnimatePresence>
-                            </div>
-                        )}
-                    </motion.div>
-                </div>
+                    {filteredMenu.length > 5 && <>
+                        <div className="my-8 flex items-center justify-center gap-4 text-center"><span className="hidden h-px w-16 bg-teal-200 sm:block" /><h2 className="text-lg font-bold text-slate-900">More from Our Menu</h2><span className="hidden h-px w-16 bg-teal-200 sm:block" /></div>
+                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{filteredMenu.slice(5).map((item) => <CompactDish key={item.id} item={item} cart={cart} favoriteIds={favoriteIds} toggleFavorite={toggleFavorite} addToCart={addToCart} updateQuantity={updateQuantity} compact />)}</div>
+                    </>}
+                </>}
             </div>
 
             {/* Floating Cart */}

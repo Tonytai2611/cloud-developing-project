@@ -12,6 +12,7 @@ import Table from './pages/Table';
 import UserProfile from './pages/UserProfile';
 import VerifyEmail from './pages/VerifyEmail';
 import MyBookings from './pages/MyBookings';
+import MyFavourites from './pages/MyFavourites';
 import Admin from './pages/admin/Admin';
 import AdminManageMenu from './pages/admin/AdminManageMenuCategory';
 import AdminManageTable from './pages/admin/AdminManageTable';
@@ -92,6 +93,7 @@ function App() {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/chat" element={<UserChatPage />} />
           <Route path="/my-bookings" element={<MyBookings />} />
+          <Route path="/my-favourites" element={<MyFavourites />} />
 
           {/* Admin routes */}
           <Route path="/admin" element={<Admin />} />
