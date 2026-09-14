@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../../../hooks/useAuth';
 import { env } from '../../../../config/env';
+import { useAdminNavigationCounts } from '../../dashboard/hooks/useAdminNavigationCounts';
 
 const STORAGE_KEY = 'admin_chat_conversations';
 
 export function useAdminChat() {
+  const navigationCounts = useAdminNavigationCounts();
   const { user } = useAuth();
   const adminEmail = user?.email || user?.username;
   const [selectedUser, setSelectedUser] = useState(null);
@@ -54,7 +56,9 @@ export function useAdminChat() {
     socket.onopen = () => {
       setIsConnected(true);
       setLoading(false);
-      socket.send(JSON.stringify({ action: 'getConversations', adminEmail }));
+      let lastRead = {};
+      try { lastRead = JSON.parse(localStorage.getItem(`brewcraft-admin-seen:${adminEmail}`) || '{}').chatRead || {}; } catch {}
+      socket.send(JSON.stringify({ action: 'getConversations', adminEmail, lastRead }));
       socket.send(JSON.stringify({ action: 'getUsers', role: 'customer' }));
       customerLookupTimer = window.setInterval(() => {
         if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ action: 'getUsers', role: 'customer' }));
@@ -113,7 +117,18 @@ export function useAdminChat() {
   }, [messages, shouldAutoScroll]);
 
   const filteredUsers = useMemo(() => users.filter((item) => `${item.name || ''} ${item.email || ''} ${item.lastMessage || ''}`.toLowerCase().includes(searchTerm.trim().toLowerCase())), [searchTerm, users]);
-  const stats = useMemo(() => ({ total: users.length, online: users.filter((item) => item.status === 'Online').length, unread: users.reduce((total, item) => total + Number(item.unread || 0), 0) }), [users]);
+  const stats = useMemo(() => ({ total: users.length, online: users.filter((item) => item.status === 'Online').length, unread: navigationCounts.Chat ?? 0 }), [users, navigationCounts.Chat]);
+
+  useEffect(() => {
+    const markVisibleMessagesRead = () => {
+      if (!selectedUser || document.visibilityState !== 'visible' || !messages.length) return;
+      const timestamp = messages.map((message) => message.timestamp).filter(Boolean).sort().pop();
+      if (timestamp) window.dispatchEvent(new CustomEvent('brewcraft:chat-read', { detail: { email: selectedUser.email, timestamp } }));
+    };
+    markVisibleMessagesRead();
+    document.addEventListener('visibilitychange', markVisibleMessagesRead);
+    return () => document.removeEventListener('visibilitychange', markVisibleMessagesRead);
+  }, [messages, selectedUser]);
 
   const selectUser = (nextUser) => {
     selectedUserRef.current = nextUser;

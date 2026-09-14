@@ -21,6 +21,7 @@ import AdminChat from './pages/admin/AdminChat';
 import AdminMenuCategoryForm from './pages/admin/AdminMenuCategoryForm';
 import { Toaster } from 'sonner';
 import './App.css';
+import { AdminNavigationCountsProvider } from './components/admin/dashboard/hooks/useAdminNavigationCounts';
 
 // Layout component để xử lý conditional header/footer
 function Layout({ children }) {
@@ -70,7 +71,7 @@ function Layout({ children }) {
       <Toaster position="top-right" richColors closeButton />
       {showHeader && <Header />}
       <div className={paddingTopClass}>
-        {children}
+        {location.pathname.startsWith('/admin') ? <AdminNavigationCountsProvider>{children}</AdminNavigationCountsProvider> : children}
       </div>
       {showHeader && <Footer />}
       {/* UserChat removed - now using /chat page */}

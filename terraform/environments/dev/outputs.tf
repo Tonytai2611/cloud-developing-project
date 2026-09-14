@@ -52,3 +52,8 @@ output "tables_table_name" {
   description = "Restaurant tables DynamoDB table name."
   value       = module.dynamodb.tables_table_name
 }
+
+output "favorites_table_name" {
+  description = "User favourites DynamoDB table name."
+  value       = module.dynamodb.favorites_table_name
+}

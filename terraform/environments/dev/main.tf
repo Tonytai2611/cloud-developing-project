@@ -107,6 +107,7 @@ module "ecs" {
     BOOKING_TABLE        = module.dynamodb.bookings_table_name
     TABLES_TABLE         = module.dynamodb.tables_table_name
     USERS_TABLE          = module.dynamodb.users_table_name
+    FAVORITES_TABLE      = module.dynamodb.favorites_table_name
   }
 
   cpu             = 256
@@ -115,7 +116,8 @@ module "ecs" {
   additional_dynamodb_table_arns = [
     module.dynamodb.bookings_table_arn,
     module.dynamodb.menu_table_arn,
-    module.dynamodb.tables_table_arn
+    module.dynamodb.tables_table_arn,
+    module.dynamodb.favorites_table_arn
   ]
   cognito_user_pool_arn = "arn:aws:cognito-idp:${var.aws_region}:${data.aws_caller_identity.current.account_id}:userpool/${var.cognito_user_pool_id}"
   image_bucket_arn      = module.image_bucket.image_bucket_arn
@@ -155,7 +157,9 @@ module "frontend_hosting" {
     "/createMenuItem",
     "/updateMenuItem",
     "/deleteMenuItem",
-    "/getMenu"
+    "/getMenu",
+    "/favorites",
+    "/favorites/*"
   ]
   tags = local.common_tags
 }

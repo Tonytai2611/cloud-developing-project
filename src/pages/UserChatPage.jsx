@@ -235,10 +235,7 @@ const UserChatPage = () => {
 
             <main className="flex-1 w-full">
                 <section className="mx-auto max-w-7xl px-4 pt-8 md:px-6">
-                    <div className="mb-6 flex flex-col gap-4 rounded-3xl bg-white/65 p-6 shadow-sm ring-1 ring-white/80 backdrop-blur sm:flex-row sm:items-center">
-                        <div className="grid h-16 w-16 place-items-center rounded-full bg-teal-50 text-teal-700">
-                            <MessageCircle className="h-8 w-8" />
-                        </div>
+                    <div className="mb-6">
                         <div className="min-w-0 flex-1">
                             <h1 className="font-serif text-4xl font-black text-slate-950 md:text-5xl">Support Chat</h1>
                             <p className="mt-2 max-w-3xl text-slate-600">Get help from our team. We're here to make your BrewCraft experience even better.</p>

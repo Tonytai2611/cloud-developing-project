@@ -113,3 +113,37 @@ resource "aws_dynamodb_table" "bookings" {
     }
   )
 }
+
+resource "aws_dynamodb_table" "favorites" {
+  name         = "${local.name_prefix}-favorites"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "userId"
+  range_key    = "dishId"
+
+  attribute {
+    name = "userId"
+    type = "S"
+  }
+
+  attribute {
+    name = "dishId"
+    type = "S"
+  }
+
+  server_side_encryption {
+    enabled = true
+  }
+
+  point_in_time_recovery {
+    enabled = var.enable_point_in_time_recovery
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      "Name"        = "${local.name_prefix}-favorites"
+      "Project"     = var.project_name
+      "Environment" = var.environment
+    }
+  )
+}

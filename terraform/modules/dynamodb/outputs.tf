@@ -37,3 +37,13 @@ output "bookings_table_arn" {
   description = "The ARN of the DynamoDB bookings table."
   value       = aws_dynamodb_table.bookings.arn
 }
+
+output "favorites_table_name" {
+  description = "The name of the user favourites table."
+  value       = aws_dynamodb_table.favorites.name
+}
+
+output "favorites_table_arn" {
+  description = "The ARN of the user favourites table."
+  value       = aws_dynamodb_table.favorites.arn
+}

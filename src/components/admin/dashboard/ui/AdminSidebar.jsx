@@ -1,8 +1,10 @@
 import React from 'react';
 import { Coffee } from 'lucide-react';
 import { adminNavigation, secondaryNavigation } from '../services/adminDashboardService';
+import { useAdminNavigationCounts } from '../hooks/useAdminNavigationCounts';
 
 export default function AdminSidebar({ currentPath, navigate }) {
+  const counts = useAdminNavigationCounts();
   const renderItem = (item) => {
     const Icon = item.icon;
     const active = item.route === '/admin' ? currentPath === item.route : currentPath.startsWith(item.route || '__');
@@ -17,7 +19,7 @@ export default function AdminSidebar({ currentPath, navigate }) {
       >
         <Icon className={`h-5 w-5 ${active ? 'text-teal-700' : 'text-slate-500 group-hover:text-teal-700'}`} />
         <span className="flex-1">{item.label}</span>
-        {item.badge && <span className="rounded-md bg-emerald-600 px-2 py-0.5 text-xs text-white">{item.badge}</span>}
+        {counts[item.label] > 0 && <span title={item.label === 'Orders' ? 'Unseen orders' : 'Unread messages'} className="rounded-md bg-emerald-600 px-2 py-0.5 text-xs text-white">{counts[item.label]}</span>}
       </button>
     );
   };

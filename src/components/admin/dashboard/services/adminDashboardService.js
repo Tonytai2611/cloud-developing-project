@@ -31,8 +31,8 @@ export const adminNavigation = [
   { label: 'Dashboard', icon: LayoutDashboard, route: '/admin' },
   { label: 'Table Management', icon: Table2, route: '/admin/manage-table' },
   { label: 'Menu Management', icon: UtensilsCrossed, route: '/admin/manage-menu' },
-  { label: 'Orders', icon: ShoppingBag, route: '/admin/manage-ordering-food', badge: '3' },
-  { label: 'Chat', icon: MessageCircle, route: '/admin/chat-with-users', badge: '5' },
+  { label: 'Orders', icon: ShoppingBag, route: '/admin/manage-ordering-food' },
+  { label: 'Chat', icon: MessageCircle, route: '/admin/chat-with-users' },
 ];
 
 export const secondaryNavigation = [

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Mail, Lock, User, Check, X, UserCircle, Coffee, Phone, ArrowRight, CalendarDays, LoaderCircle, ShieldCheck, LogIn, UserPlus, ChevronDown, LogOut, Heart, Settings, Menu as MenuIcon } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Check, X, UserCircle, Coffee, Phone, ArrowRight, CalendarDays, LoaderCircle, ShieldCheck, LogIn, UserPlus, ChevronDown, LogOut, Heart, Menu as MenuIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import {
     Dialog,
@@ -227,9 +227,14 @@ const Header = () => {
                         Reservation
                     </Link>
                     {user && (
+                        <>
                         <Link to="/my-bookings" className="nav-link" onClick={closeMenus}>
                             My Bookings
                         </Link>
+                        <Link to="/chat" className="nav-link" onClick={closeMenus}>
+                            Support
+                        </Link>
+                        </>
                     )}
                     {!user && (
                         <>
@@ -266,10 +271,6 @@ const Header = () => {
                                     <Link to="/my-favourites" role="menuitem" onClick={closeMenus}>
                                         <Heart className="h-4 w-4" />
                                         My Favourites
-                                    </Link>
-                                    <Link to="/user-profile#settings" role="menuitem" onClick={closeMenus}>
-                                        <Settings className="h-4 w-4" />
-                                        Settings
                                     </Link>
                                     <button type="button" role="menuitem" onClick={onLogout} className="account-menu-danger">
                                         <LogOut className="h-4 w-4" />
@@ -628,6 +629,7 @@ const Header = () => {
                         <Link to="/menu" className="mobile-nav-link" onClick={closeMenus}>Menu</Link>
                         <Link to="/booking" className="mobile-nav-link" onClick={closeMenus}>Reservation</Link>
                         {user && <Link to="/my-bookings" className="mobile-nav-link" onClick={closeMenus}>My Bookings</Link>}
+                        {user && <Link to="/chat" className="mobile-nav-link" onClick={closeMenus}>Support</Link>}
                         {!user && <Link to="/#about" className="mobile-nav-link" onClick={closeMenus}>About</Link>}
                         {!user && <Link to="/contact-us" className="mobile-nav-link" onClick={closeMenus}>Contact</Link>}
                         {user && (
@@ -639,10 +641,6 @@ const Header = () => {
                                 <Link to="/my-favourites" className="mobile-nav-link" onClick={closeMenus}>
                                     <Heart className="h-4 w-4" />
                                     My Favourites
-                                </Link>
-                                <Link to="/user-profile#settings" className="mobile-nav-link" onClick={closeMenus}>
-                                    <Settings className="h-4 w-4" />
-                                    Settings
                                 </Link>
                                 <button type="button" onClick={onLogout}>
                                     <LogOut className="h-4 w-4" />
