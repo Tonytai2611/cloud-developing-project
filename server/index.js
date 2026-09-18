@@ -2,13 +2,13 @@ const express = require('express');
 const cors = require('cors');
 const crypto = require('crypto');
 const { serialize, parse } = require('cookie');
-const { cognito, dynamodb } = require('./config/aws');
+const { cognito, dynamodb, s3 } = require('./config/aws');
 const { env, warnMissingRuntimeConfig } = require('./config/env');
 const { invokeJsonLambda } = require('./services/lambdaInvoker.service');
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+app.use(cors({ origin: true, credentials: true }));
+app.use(express.json({ limit: '12mb' }));
 
 warnMissingRuntimeConfig();
 
@@ -16,6 +16,51 @@ const PORT = env.port;
 const CLIENT_ID = env.cognitoClientId;
 const CLIENT_SECRET = env.cognitoClientSecret;
 const USERS_TABLE = env.usersTable;
+const MENU_TABLE = env.menuTable;
+const BOOKING_TABLE = env.bookingTable;
+const TABLES_TABLE = env.tablesTable;
+const FAVORITES_TABLE = env.favoritesTable;
+const IMAGE_BUCKET = env.imageBucket;
+
+function getConfiguredTable(tableName, res, label) {
+  if (!tableName) {
+    res.status(500).json({ error: `Server misconfiguration: ${label} missing` });
+    return null;
+  }
+  return tableName;
+}
+
+function getCurrentUserId(req) {
+  try {
+    const cookies = parse(req.headers.cookie || '');
+    const userInfo = cookies.userInfo ? JSON.parse(cookies.userInfo) : null;
+    return userInfo?.username || userInfo?.email || null;
+  } catch {
+    return null;
+  }
+}
+
+function buildUpdateExpression(data, reservedNames = new Set()) {
+  const updateParts = [];
+  const ExpressionAttributeNames = {};
+  const ExpressionAttributeValues = {};
+
+  Object.entries(data).forEach(([key, value]) => {
+    if (key === 'id' || value === undefined) return;
+
+    const nameToken = reservedNames.has(key) ? `#${key}` : key;
+    if (reservedNames.has(key)) ExpressionAttributeNames[nameToken] = key;
+
+    updateParts.push(`${nameToken} = :${key}`);
+    ExpressionAttributeValues[`:${key}`] = value;
+  });
+
+  return {
+    UpdateExpression: updateParts.length > 0 ? `SET ${updateParts.join(', ')}` : '',
+    ExpressionAttributeNames,
+    ExpressionAttributeValues,
+  };
+}
 
 function generateSecretHash(username) {
   if (!CLIENT_SECRET) return undefined;
@@ -166,10 +211,13 @@ app.post('/login', async (req, res) => {
         let isAdmin = false;
         if (Array.isArray(groups)) isAdmin = groups.includes('admin');
         if (typeof groups === 'string') isAdmin = groups.split(',').includes('admin');
+        const email = decoded.email || null;
         userInfo = {
-          username: decoded['cognito:username'] || username,
-          email: decoded.email || null,
+          username: email || username,
+          cognitoUsername: decoded['cognito:username'] || null,
+          email,
           name: decoded.name || null,
+          role: isAdmin ? 'admin' : 'customer',
           isAdmin: isAdmin || false
         };
       } catch (e) {
@@ -191,7 +239,14 @@ app.post('/login', async (req, res) => {
       console.warn('Failed to set cookie:', e.message || e);
     }
 
-    res.json({ message: 'Login successful', isAdmin: userInfo.isAdmin });
+    res.json({
+      message: 'Login successful',
+      accessToken: auth.AccessToken,
+      idToken: auth.IdToken,
+      refreshToken: auth.RefreshToken,
+      userInfo,
+      isAdmin: userInfo.isAdmin,
+    });
   } catch (error) {
     console.error('Login Error:', error);
     res.status(401).json({ error: 'Invalid username or password' });
@@ -229,6 +284,390 @@ app.post('/logout', (req, res) => {
     }),
   ]);
   return res.status(200).json({ message: 'Logged out successfully' });
+});
+
+app.get('/getMenu', async (req, res) => {
+  const tableName = getConfiguredTable(MENU_TABLE, res, 'MENU_TABLE');
+  if (!tableName) return;
+
+  try {
+    const response = await dynamodb.scan({ TableName: tableName }).promise();
+    return res.json({ message: 'Menu retrieved successfully', data: response.Items || [] });
+  } catch (error) {
+    console.error('GET /getMenu error:', error);
+    return res.status(500).json({ error: 'Failed to read menu', detail: error.message });
+  }
+});
+
+app.post('/createMenuItem', async (req, res) => {
+  const tableName = getConfiguredTable(MENU_TABLE, res, 'MENU_TABLE');
+  if (!tableName) return;
+
+  const items = Array.isArray(req.body) ? req.body : [req.body];
+  if (items.some(item => !item?.id || !item?.title || !item?.dishes)) {
+    return res.status(400).json({ error: 'Missing required fields: id, title, dishes' });
+  }
+
+  try {
+    await Promise.all(items.map(item => dynamodb.put({
+      TableName: tableName,
+      Item: { ...item, id: String(item.id) },
+    }).promise()));
+
+    const responseData = Array.isArray(req.body)
+      ? items.map(item => ({ ...item, id: String(item.id) }))
+      : { ...req.body, id: String(req.body.id) };
+
+    return res.status(201).json({ message: 'Menu item created successfully', data: responseData });
+  } catch (error) {
+    console.error('POST /createMenuItem error:', error);
+    return res.status(500).json({ error: 'Failed to create menu item', detail: error.message });
+  }
+});
+
+app.put('/updateMenuItem', async (req, res) => {
+  const tableName = getConfiguredTable(MENU_TABLE, res, 'MENU_TABLE');
+  if (!tableName) return;
+
+  const data = req.body || {};
+  if (!data.id) return res.status(400).json({ error: 'Menu item id is required' });
+
+  const update = buildUpdateExpression(data);
+  if (!update.UpdateExpression) return res.status(400).json({ error: 'Nothing to update' });
+
+  try {
+    const response = await dynamodb.update({
+      TableName: tableName,
+      Key: { id: String(data.id) },
+      UpdateExpression: update.UpdateExpression,
+      ExpressionAttributeValues: update.ExpressionAttributeValues,
+      ReturnValues: 'ALL_NEW',
+    }).promise();
+
+    return res.json({ message: 'Menu item updated successfully', data: response.Attributes || {} });
+  } catch (error) {
+    console.error('PUT /updateMenuItem error:', error);
+    return res.status(500).json({ error: 'Failed to update menu item', detail: error.message });
+  }
+});
+
+app.delete('/deleteMenuItem', async (req, res) => {
+  const tableName = getConfiguredTable(MENU_TABLE, res, 'MENU_TABLE');
+  if (!tableName) return;
+
+  const { id } = req.body || {};
+  if (!id) return res.status(400).json({ error: 'Menu item id is required' });
+
+  try {
+    await dynamodb.delete({ TableName: tableName, Key: { id: String(id) } }).promise();
+    return res.json({ message: 'Menu item deleted successfully' });
+  } catch (error) {
+    console.error('DELETE /deleteMenuItem error:', error);
+    return res.status(500).json({ error: 'Failed to delete menu item', detail: error.message });
+  }
+});
+
+app.get('/getTable', async (req, res) => {
+  const tableName = getConfiguredTable(TABLES_TABLE, res, 'TABLES_TABLE');
+  if (!tableName) return;
+
+  try {
+    const response = await dynamodb.scan({ TableName: tableName }).promise();
+    return res.json({ message: 'Tables retrieved successfully', data: response.Items || [] });
+  } catch (error) {
+    console.error('GET /getTable error:', error);
+    return res.status(500).json({ error: 'Failed to read tables', detail: error.message });
+  }
+});
+
+// User favourites are scoped by the authenticated user's username.
+app.get('/favorites', async (req, res) => {
+  const tableName = getConfiguredTable(FAVORITES_TABLE, res, 'FAVORITES_TABLE');
+  if (!tableName) return;
+  const userId = getCurrentUserId(req);
+  if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+  try {
+    const response = await dynamodb.query({
+      TableName: tableName,
+      KeyConditionExpression: 'userId = :userId',
+      ExpressionAttributeValues: { ':userId': userId.toLowerCase() },
+    }).promise();
+    return res.json({ data: response.Items || [] });
+  } catch (error) {
+    console.error('GET /favorites error:', error);
+    return res.status(500).json({ error: 'Failed to read favourites', detail: error.message });
+  }
+});
+
+app.post('/favorites', async (req, res) => {
+  const tableName = getConfiguredTable(FAVORITES_TABLE, res, 'FAVORITES_TABLE');
+  if (!tableName) return;
+  const userId = getCurrentUserId(req);
+  if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+  const { dishId, dish } = req.body || {};
+  if (!dishId) return res.status(400).json({ error: 'dishId is required' });
+
+  try {
+    const item = { userId: userId.toLowerCase(), dishId: String(dishId), ...(dish || {}), savedAt: new Date().toISOString() };
+    await dynamodb.put({ TableName: tableName, Item: item }).promise();
+    return res.status(201).json({ data: item });
+  } catch (error) {
+    console.error('POST /favorites error:', error);
+    return res.status(500).json({ error: 'Failed to save favourite', detail: error.message });
+  }
+});
+
+app.delete('/favorites/:dishId', async (req, res) => {
+  const tableName = getConfiguredTable(FAVORITES_TABLE, res, 'FAVORITES_TABLE');
+  if (!tableName) return;
+  const userId = getCurrentUserId(req);
+  if (!userId) return res.status(401).json({ error: 'Not authenticated' });
+
+  try {
+    await dynamodb.delete({ TableName: tableName, Key: { userId: userId.toLowerCase(), dishId: String(req.params.dishId) } }).promise();
+    return res.json({ message: 'Favourite removed' });
+  } catch (error) {
+    console.error('DELETE /favorites error:', error);
+    return res.status(500).json({ error: 'Failed to remove favourite', detail: error.message });
+  }
+});
+
+async function generateTableId() {
+  const response = await dynamodb.scan({
+    TableName: TABLES_TABLE,
+    ProjectionExpression: 'id',
+  }).promise();
+  return `TBL-${String((response.Items || []).length + 1).padStart(3, '0')}`;
+}
+
+async function generateBookingId(date) {
+  const normalizedDate = String(date || new Date().toISOString().slice(0, 10)).replace(/-/g, '');
+  const response = await dynamodb.scan({
+    TableName: BOOKING_TABLE,
+    ProjectionExpression: 'id, #date',
+    FilterExpression: '#date = :date',
+    ExpressionAttributeNames: { '#date': 'date' },
+    ExpressionAttributeValues: { ':date': date },
+  }).promise();
+
+  return `BK-${normalizedDate}-${String((response.Items || []).length + 1).padStart(3, '0')}`;
+}
+
+function normalizeBookingPayload(data) {
+  const now = new Date().toISOString();
+  return {
+    id: data.id,
+    userId: data.userId || data.email || 'guest',
+    customerName: data.customerName || data.name || 'Customer',
+    phone: data.phone || '',
+    email: data.email || '',
+    guests: Number(data.guests || 1),
+    tableId: data.tableId || '',
+    tableNumber: data.tableNumber || data.tableId || '',
+    date: data.date,
+    time: data.time,
+    selectedItems: Array.isArray(data.selectedItems) ? data.selectedItems : [],
+    total: Number(data.total || data.totalPrice || 0),
+    totalPrice: Number(data.totalPrice || data.total || 0),
+    specialRequests: data.specialRequests || '',
+    status: data.status || 'PENDING',
+    createdAt: data.createdAt || now,
+    updatedAt: now,
+  };
+}
+
+app.get('/getBooking', async (req, res) => {
+  const tableName = getConfiguredTable(BOOKING_TABLE, res, 'BOOKING_TABLE');
+  if (!tableName) return;
+
+  const { userId } = req.query || {};
+
+  try {
+    const params = userId
+      ? {
+          TableName: tableName,
+          FilterExpression: 'userId = :userId OR email = :userId',
+          ExpressionAttributeValues: { ':userId': userId },
+        }
+      : { TableName: tableName };
+
+    const response = await dynamodb.scan(params).promise();
+    const items = (response.Items || []).sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+    return res.json({ message: 'Bookings retrieved successfully', data: items });
+  } catch (error) {
+    console.error('GET /getBooking error:', error);
+    return res.status(500).json({ error: 'Failed to read bookings', detail: error.message });
+  }
+});
+
+app.post('/createBooking', async (req, res) => {
+  const tableName = getConfiguredTable(BOOKING_TABLE, res, 'BOOKING_TABLE');
+  if (!tableName) return;
+
+  const data = req.body || {};
+  if (!data.customerName || !data.phone || !data.email || !data.guests || !data.tableId || !data.date || !data.time) {
+    return res.status(400).json({ error: 'Missing required booking fields' });
+  }
+
+  try {
+    const conflict = await dynamodb.scan({
+      TableName: tableName,
+      FilterExpression: 'tableId = :tableId AND #date = :date AND #time = :time AND #status IN (:pending, :confirmed)',
+      ExpressionAttributeNames: {
+        '#date': 'date',
+        '#time': 'time',
+        '#status': 'status',
+      },
+      ExpressionAttributeValues: {
+        ':tableId': data.tableId,
+        ':date': data.date,
+        ':time': data.time,
+        ':pending': 'PENDING',
+        ':confirmed': 'CONFIRMED',
+      },
+    }).promise();
+
+    if ((conflict.Items || []).length > 0) {
+      return res.status(409).json({ error: 'This table is already booked for the selected date and time' });
+    }
+
+    const id = await generateBookingId(data.date);
+    const booking = normalizeBookingPayload({ ...data, id });
+
+    await dynamodb.put({ TableName: tableName, Item: booking }).promise();
+    return res.status(201).json({ message: 'Booking created successfully', data: booking });
+  } catch (error) {
+    console.error('POST /createBooking error:', error);
+    return res.status(500).json({ error: 'Failed to create booking', detail: error.message });
+  }
+});
+
+app.put('/updateBooking', async (req, res) => {
+  const tableName = getConfiguredTable(BOOKING_TABLE, res, 'BOOKING_TABLE');
+  if (!tableName) return;
+
+  const data = req.body || {};
+  if (!data.id) return res.status(400).json({ error: 'Booking id is required' });
+
+  const update = buildUpdateExpression({ ...data, updatedAt: new Date().toISOString() }, new Set(['status', 'date', 'time']));
+  if (!update.UpdateExpression) return res.status(400).json({ error: 'Nothing to update' });
+
+  try {
+    const params = {
+      TableName: tableName,
+      Key: { id: String(data.id) },
+      UpdateExpression: update.UpdateExpression,
+      ExpressionAttributeValues: update.ExpressionAttributeValues,
+      ReturnValues: 'ALL_NEW',
+    };
+
+    if (Object.keys(update.ExpressionAttributeNames).length > 0) {
+      params.ExpressionAttributeNames = update.ExpressionAttributeNames;
+    }
+
+    const response = await dynamodb.update(params).promise();
+    return res.json({ message: 'Booking updated successfully', data: response.Attributes || {} });
+  } catch (error) {
+    console.error('PUT /updateBooking error:', error);
+    return res.status(500).json({ error: 'Failed to update booking', detail: error.message });
+  }
+});
+
+app.delete('/deleteBooking', async (req, res) => {
+  const tableName = getConfiguredTable(BOOKING_TABLE, res, 'BOOKING_TABLE');
+  if (!tableName) return;
+
+  const { id } = req.body || {};
+  if (!id) return res.status(400).json({ error: 'Booking id is required' });
+
+  try {
+    await dynamodb.delete({ TableName: tableName, Key: { id: String(id) } }).promise();
+    return res.json({ message: 'Booking deleted successfully' });
+  } catch (error) {
+    console.error('DELETE /deleteBooking error:', error);
+    return res.status(500).json({ error: 'Failed to delete booking', detail: error.message });
+  }
+});
+
+app.post('/createTable', async (req, res) => {
+  const tableName = getConfiguredTable(TABLES_TABLE, res, 'TABLES_TABLE');
+  if (!tableName) return;
+
+  const data = { ...(req.body || {}) };
+  if (!data.id) data.id = await generateTableId();
+  if (!data.tableNumber || !data.seats) {
+    return res.status(400).json({ error: 'Missing required fields: tableNumber, seats' });
+  }
+
+  data.id = String(data.id);
+  data.status = data.status || 'AVAILABLE';
+  if (!['AVAILABLE', 'RESERVED'].includes(data.status)) {
+    return res.status(400).json({ error: 'Status must be AVAILABLE or RESERVED' });
+  }
+
+  try {
+    await dynamodb.put({ TableName: tableName, Item: data }).promise();
+    return res.status(201).json({ message: 'Table created successfully', data });
+  } catch (error) {
+    console.error('POST /createTable error:', error);
+    return res.status(500).json({ error: 'Failed to create table', detail: error.message });
+  }
+});
+
+app.put('/updateTable', async (req, res) => {
+  const tableName = getConfiguredTable(TABLES_TABLE, res, 'TABLES_TABLE');
+  if (!tableName) return;
+
+  const data = req.body || {};
+  if (!data.id) return res.status(400).json({ error: 'Table id is required' });
+  if (data.status && !['AVAILABLE', 'RESERVED'].includes(data.status)) {
+    return res.status(400).json({ error: 'Status must be AVAILABLE or RESERVED' });
+  }
+
+  const update = buildUpdateExpression(data, new Set(['status']));
+  if (!update.UpdateExpression) return res.status(400).json({ error: 'Nothing to update' });
+
+  try {
+    const params = {
+      TableName: tableName,
+      Key: { id: String(data.id) },
+      UpdateExpression: update.UpdateExpression,
+      ExpressionAttributeValues: update.ExpressionAttributeValues,
+      ReturnValues: 'ALL_NEW',
+    };
+
+    if (Object.keys(update.ExpressionAttributeNames).length > 0) {
+      params.ExpressionAttributeNames = update.ExpressionAttributeNames;
+    }
+
+    const response = await dynamodb.update(params).promise();
+    return res.json({ message: 'Table updated successfully', data: response.Attributes || {} });
+  } catch (error) {
+    console.error('PUT /updateTable error:', error);
+    return res.status(500).json({ error: 'Failed to update table', detail: error.message });
+  }
+});
+
+app.delete('/deleteTable', async (req, res) => {
+  const tableName = getConfiguredTable(TABLES_TABLE, res, 'TABLES_TABLE');
+  if (!tableName) return;
+
+  const { id } = req.body || {};
+  if (!id) return res.status(400).json({ error: 'Table id is required' });
+
+  try {
+    const current = await dynamodb.get({ TableName: tableName, Key: { id: String(id) } }).promise();
+    if (current.Item?.status === 'RESERVED') {
+      return res.status(400).json({ error: 'Cannot delete table that is currently reserved' });
+    }
+
+    await dynamodb.delete({ TableName: tableName, Key: { id: String(id) } }).promise();
+    return res.json({ message: 'Table deleted successfully' });
+  } catch (error) {
+    console.error('DELETE /deleteTable error:', error);
+    return res.status(500).json({ error: 'Failed to delete table', detail: error.message });
+  }
 });
 
 // --- User CRUD endpoints (operate on USERS_TABLE)
@@ -348,18 +787,59 @@ app.post('/upload', async (req, res) => {
   if (!file || !fileName) {
     return res.status(400).json({ error: 'Missing file or fileName' });
   }
+  if (!IMAGE_BUCKET) {
+    return res.status(500).json({ error: 'Server misconfiguration: IMAGE_BUCKET missing' });
+  }
 
   try {
-    const response = await invokeJsonLambda(env.uploadImageFunctionName, { file, fileName });
+    const safeFileName = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const key = `menu/${safeFileName}`;
+    const body = Buffer.from(file, 'base64');
+    const extension = safeFileName.split('.').pop()?.toLowerCase();
+    const contentTypes = {
+      gif: 'image/gif',
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      webp: 'image/webp',
+    };
 
-    if (response.statusCode === 200) {
-      return res.json(response.body);
-    } else {
-      return res.status(response.statusCode).json(response.body);
-    }
+    await s3.putObject({
+      Bucket: IMAGE_BUCKET,
+      Key: key,
+      Body: body,
+      ContentType: contentTypes[extension] || 'application/octet-stream',
+    }).promise();
+
+    return res.json({
+      message: 'File uploaded successfully!',
+      url: `/images/${encodeURIComponent(key)}`,
+      fileName: safeFileName,
+    });
   } catch (error) {
     console.error('Upload API error:', error);
     return res.status(500).json({ error: 'Failed to upload image', detail: error.message });
+  }
+});
+
+app.get('/images/:key(*)', async (req, res) => {
+  if (!IMAGE_BUCKET) {
+    return res.status(500).json({ error: 'Server misconfiguration: IMAGE_BUCKET missing' });
+  }
+
+  try {
+    const key = decodeURIComponent(req.params.key);
+    const response = await s3.getObject({ Bucket: IMAGE_BUCKET, Key: key }).promise();
+
+    res.setHeader('Content-Type', response.ContentType || 'application/octet-stream');
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    return res.send(response.Body);
+  } catch (error) {
+    console.error('GET /images error:', error);
+    return res.status(error.code === 'NoSuchKey' ? 404 : 500).json({
+      error: 'Failed to read image',
+      detail: error.message,
+    });
   }
 });
 

@@ -7,8 +7,8 @@ from decimal import Decimal
 
 # Initialize AWS clients
 dynamodb = boto3.resource('dynamodb')
-connections_table = dynamodb.Table('CHAT_CONNECTIONS')
-messages_table = dynamodb.Table('CHAT_MESSAGES')
+connections_table = dynamodb.Table(os.environ.get('CHAT_CONNECTIONS_TABLE', 'CHAT_CONNECTIONS'))
+messages_table = dynamodb.Table(os.environ.get('CHAT_MESSAGES_TABLE', 'CHAT_MESSAGES'))
 
 # API Gateway Management API client (for sending messages back to clients)
 # Endpoint will be set from environment variable
@@ -299,6 +299,7 @@ def handle_get_conversations(event, connection_id):
     """
     body = json.loads(event.get('body', '{}'))
     admin_email = body.get('adminEmail')
+    last_read = body.get('lastRead') or {}
     
     if not admin_email:
         return {'statusCode': 400, 'body': 'Missing adminEmail'}
@@ -341,6 +342,8 @@ def handle_get_conversations(event, connection_id):
                 if timestamp > conversations[other_user]['lastTimestamp']:
                     conversations[other_user]['lastMessage'] = message
                     conversations[other_user]['lastTimestamp'] = timestamp
+            if recipient == admin_email and timestamp > last_read.get(other_user, ''):
+                conversations[other_user]['unread'] += 1
     
     # Sort by last timestamp (most recent first)
     conversation_list = sorted(

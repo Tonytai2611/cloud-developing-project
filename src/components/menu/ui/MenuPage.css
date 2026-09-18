@@ -1,0 +1,79 @@
+.menu-page {
+    --menu-accent: #0f766e;
+    --menu-track: #dce5e2;
+    --menu-thumb: #fff;
+    --menu-display: Georgia, 'Times New Roman', serif;
+}
+
+.menu-page .menu-title {
+    font-family: var(--menu-display);
+    letter-spacing: 0;
+    overflow-wrap: anywhere;
+}
+
+.menu-price {
+    min-width: 0;
+    max-width: 700px;
+    width: 100%;
+}
+
+.menu-price legend {
+    margin-bottom: 6px;
+}
+
+.menu-range {
+    position: relative;
+    height: 36px;
+    margin-inline: 12px;
+}
+
+.menu-range-track {
+    position: absolute;
+    inset: 15px 0;
+    border-radius: 8px;
+    background: linear-gradient(to right, var(--menu-track) var(--range-start), var(--menu-accent) var(--range-start), var(--menu-accent) var(--range-end), var(--menu-track) var(--range-end));
+}
+
+.menu-range input {
+    appearance: none;
+    -webkit-appearance: none;
+    position: absolute;
+    inset: 0 -12px;
+    width: calc(100% + 24px);
+    height: 36px;
+    margin: 0;
+    background: transparent;
+    pointer-events: none;
+}
+
+.menu-range input::-webkit-slider-thumb {
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--menu-accent);
+    border-radius: 50%;
+    background: var(--menu-thumb);
+    box-shadow: 0 2px 5px var(--menu-track);
+    pointer-events: auto;
+    cursor: grab;
+}
+
+.menu-range input::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--menu-accent);
+    border-radius: 50%;
+    background: var(--menu-thumb);
+    pointer-events: auto;
+    cursor: grab;
+}
+
+.menu-range input:focus-visible {
+    outline: 2px solid var(--menu-accent);
+    outline-offset: 3px;
+    border-radius: 8px;
+}
+
+.menu-range input:active::-webkit-slider-thumb {
+    cursor: grabbing;
+}

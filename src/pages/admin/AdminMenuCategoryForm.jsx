@@ -1,3 +1,3 @@
-import AdminMenuCategoryFormPage from '../../components/admin/ui/AdminMenuCategoryFormPage';
+import MenuCategoryEditorPage from '../../components/admin/menu/ui/MenuCategoryEditorPage';
 
-export default AdminMenuCategoryFormPage;
+export default MenuCategoryEditorPage;

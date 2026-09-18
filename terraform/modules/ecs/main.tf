@@ -51,6 +51,63 @@ resource "aws_iam_role_policy_attachment" "task_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+resource "aws_iam_role" "task" {
+  name = "${local.name_prefix}-ecs-task-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+        Action = "sts:AssumeRole"
+      }
+    ]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy" "task_runtime" {
+  name = "${local.name_prefix}-ecs-task-runtime-policy"
+  role = aws_iam_role.task.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Query",
+          "dynamodb:Scan"
+        ]
+        Resource = concat([var.users_table_arn], var.additional_dynamodb_table_arns)
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "cognito-idp:AdminGetUser",
+          "cognito-idp:AdminAddUserToGroup"
+        ]
+        Resource = var.cognito_user_pool_arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject"
+        ]
+        Resource = "${var.image_bucket_arn}/*"
+      }
+    ]
+  })
+}
 
 resource "aws_ecs_task_definition" "backend" {
   family                   = "${local.name_prefix}-backend"
@@ -59,12 +116,19 @@ resource "aws_ecs_task_definition" "backend" {
   cpu                      = var.cpu
   memory                   = var.memory
   execution_role_arn       = aws_iam_role.task_execution.arn
+  task_role_arn            = aws_iam_role.task.arn
 
   container_definitions = jsonencode([
     {
       name      = var.container_name
       image     = var.container_image
       essential = true
+      environment = [
+        for key, value in var.environment_variables : {
+          name  = key
+          value = value
+        }
+      ]
 
       portMappings = [
         {

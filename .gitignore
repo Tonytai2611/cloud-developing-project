@@ -36,6 +36,9 @@ Thumbs.db
 .terraform/
 *.tfstate
 *.tfstate.*
+*.tfplan
+__pycache__/
+*.pyc
 
 Frontend_Architecture.md
 Terraform_Architecture.md

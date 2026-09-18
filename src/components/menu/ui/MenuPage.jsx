@@ -1,32 +1,101 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, Search, Plus, Minus, X, ChevronRight } from 'lucide-react';
+import { ShoppingCart, Search, Plus, Minus, X, ChevronRight, Heart, CalendarDays } from 'lucide-react';
 import { useMenuCatalog } from '../hooks/useMenuCatalog';
+import { useAuth } from '../../../hooks/useAuth';
+import './MenuPage.css';
+
+function FavoriteButton({ item, favoriteIds, toggleFavorite }) {
+    const isFavorite = favoriteIds.includes(item.id);
+    return <button type="button" aria-label={`${isFavorite ? 'Remove' : 'Add'} ${item.name} ${isFavorite ? 'from' : 'to'} favorites`} onClick={() => toggleFavorite(item.id)} className={`grid h-9 w-9 place-items-center rounded-full shadow-sm transition ${isFavorite ? 'bg-teal-700 text-white' : 'bg-white/95 text-slate-800 hover:bg-white'}`}><Heart className="h-4 w-4" fill={isFavorite ? 'currentColor' : 'none'} /></button>;
+}
+
+function AddToBooking({ item, cart, addToCart, updateQuantity }) {
+    const selected = cart.find((cartItem) => cartItem.id === item.id);
+    if (selected) return <div className="flex items-center gap-1 rounded-full bg-teal-50 p-1"><button type="button" aria-label={`Remove one ${item.name}`} onClick={() => updateQuantity(item.id, selected.quantity - 1)} className="grid h-8 w-8 place-items-center rounded-full bg-teal-100 text-teal-700 hover:bg-teal-600 hover:text-white"><Minus className="h-4 w-4" /></button><span className="w-6 text-center text-sm font-bold text-teal-800">{selected.quantity}</span><button type="button" aria-label={`Add one ${item.name}`} onClick={() => updateQuantity(item.id, selected.quantity + 1)} className="grid h-8 w-8 place-items-center rounded-full bg-teal-700 text-white hover:bg-teal-800"><Plus className="h-4 w-4" /></button></div>;
+    return <button type="button" onClick={() => addToCart(item)} aria-label={`Add ${item.name} to booking`} className="inline-flex h-10 min-w-0 shrink-0 items-center justify-center gap-1.5 rounded-full border border-teal-700 bg-teal-700 px-5 text-xs font-bold text-white transition hover:bg-teal-700 hover:text-white sm:text-sm"><CalendarDays className="h-4 w-4" />Add</button>;
+}
+
+function DishCard({ item, cart, favoriteIds, toggleFavorite, addToCart, updateQuantity }) {
+    return <motion.article initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-white/90 bg-white/95 shadow-md backdrop-blur transition hover:-translate-y-0.5 hover:shadow-xl">
+        <div className="relative aspect-[2] overflow-hidden"><img src={item.image || '/cafe.jpg'} alt={item.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" /><span className="absolute left-3 top-3 max-w-[calc(100%-4.5rem)] truncate rounded-full bg-white/95 px-3 py-1 text-[11px] font-bold text-teal-800">{item.category || 'Chef selection'}</span><div className="absolute right-3 top-3"><FavoriteButton item={item} favoriteIds={favoriteIds} toggleFavorite={toggleFavorite} /></div></div>
+        <div className="flex min-w-0 flex-1 flex-col p-4 sm:p-5"><h2 className="truncate text-lg font-black text-slate-950">{item.name}</h2><p className="mt-1 line-clamp-2 min-h-[2.5rem] text-sm leading-5 text-slate-600">{item.description || 'Freshly prepared from the BrewCraft kitchen.'}</p><div className="mt-auto flex min-w-0 flex-wrap items-center justify-between gap-3 pt-4"><p className="shrink-0 whitespace-nowrap text-base font-black text-teal-700 sm:text-lg">{Number(item.price || 0).toLocaleString('vi-VN')}₫</p><AddToBooking item={item} cart={cart} addToCart={addToCart} updateQuantity={updateQuantity} /></div></div>
+    </motion.article>;
+}
 
 export default function Menu() {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const {
-        activeImageIndex,
         addToCart,
         cart,
         categories,
         error,
-        featuredImages,
-        filteredMenu,
+        allDishes,
+        favoriteIds,
         getTotalPrice,
         loading,
         removeFromCart,
         searchTerm,
         selectedCategory,
-        setActiveImageIndex,
         setSearchTerm,
         setSelectedCategory,
+        toggleFavorite,
         updateQuantity
-    } = useMenuCatalog();
+    } = useMenuCatalog(user);
+
+    const priceBounds = useMemo(() => {
+        const prices = allDishes.map((item) => Number(item.price) || 0).filter((price) => price > 0);
+        if (!prices.length) return { min: 0, max: 100000 };
+        return {
+            min: 0,
+            max: Math.max(1000, Math.ceil(Math.max(...prices) / 1000) * 1000)
+        };
+    }, [allDishes]);
+    const [sortBy, setSortBy] = useState('default');
+    const [minPrice, setMinPrice] = useState(priceBounds.min);
+    const [maxPrice, setMaxPrice] = useState(priceBounds.max);
+
+    useEffect(() => {
+        setMinPrice(priceBounds.min);
+        setMaxPrice(priceBounds.max);
+    }, [priceBounds.min, priceBounds.max]);
+
+    const displayedMenu = useMemo(() => allDishes.filter((item) => {
+        const categoryMatches = selectedCategory === 'All' || item.category === selectedCategory;
+        const searchMatches = !searchTerm.trim() || item.name.toLowerCase().includes(searchTerm.trim().toLowerCase()) || (item.description || '').toLowerCase().includes(searchTerm.trim().toLowerCase());
+        const price = Number(item.price) || 0;
+        return categoryMatches && searchMatches && price >= minPrice && price <= maxPrice;
+    }).sort((a, b) => {
+        if (sortBy === 'price-asc') return Number(a.price) - Number(b.price);
+        if (sortBy === 'price-desc') return Number(b.price) - Number(a.price);
+        if (sortBy === 'name') return a.name.localeCompare(b.name);
+        return 0;
+    }), [allDishes, maxPrice, minPrice, searchTerm, selectedCategory, sortBy]);
+
+    const priceFilter = (
+        <fieldset className="menu-price">
+            <legend className="text-sm font-semibold text-teal-900">Price Range</legend>
+            <div className="flex flex-wrap justify-between gap-2 text-sm text-teal-800">
+                <output>{minPrice.toLocaleString('vi-VN')}₫</output>
+                <output>{maxPrice.toLocaleString('vi-VN')}₫</output>
+            </div>
+            <div className="menu-range" style={{ '--range-start': `${minPrice / priceBounds.max * 100}%`, '--range-end': `${maxPrice / priceBounds.max * 100}%` }}>
+                <div className="menu-range-track" />
+                <input aria-label="Minimum price" aria-valuetext={`${minPrice.toLocaleString('vi-VN')} dong`} type="range" min="0" max={priceBounds.max} step="1000" value={minPrice} onChange={(event) => setMinPrice(Math.min(Number(event.target.value), maxPrice))} />
+                <input aria-label="Maximum price" aria-valuetext={`${maxPrice.toLocaleString('vi-VN')} dong`} type="range" min="0" max={priceBounds.max} step="1000" value={maxPrice} onChange={(event) => setMaxPrice(Math.max(Number(event.target.value), minPrice))} />
+            </div>
+        </fieldset>
+    );
 
     const goToBooking = () => {
         navigate('/booking', { state: { selectedItems: cart } });
+    };
+    const pageBackground = {
+        backgroundImage: "url('/background.png')",
+        backgroundPosition: 'center top',
+        backgroundSize: 'cover'
     };
 
     if (loading) {
@@ -49,223 +118,36 @@ export default function Menu() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            {/* Header Section */}
-            <div className="bg-gradient-to-r from-[#0F4C4C] to-teal-600 py-12">
-                <div className="container mx-auto px-4">
-                    <motion.div
-                        initial={{ opacity: 0, y: -20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-center mb-8"
-                    >
-                        <span className="text-teal-200 text-sm tracking-[0.3em] uppercase">Explore Menu Option</span>
-                        <h1 className="text-4xl md:text-5xl font-bold text-white mt-2">
-                            Our Delicious Menu
-                        </h1>
-                    </motion.div>
+        <div className="menu-page min-h-screen bg-[#f8fdfa] bg-fixed pt-20" style={pageBackground}>
+            <div className="container mx-auto max-w-7xl px-4 pb-64 pt-5 sm:pt-6">
+                <motion.section initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="mx-auto max-w-5xl text-center">
+                    <p className="text-xs font-bold uppercase tracking-[0.35em] text-teal-700">Explore Our Menu</p>
+                    <h1 className="menu-title mt-2 text-4xl font-bold text-slate-950 sm:text-5xl">Our Delicious Menu</h1>
+                    <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">Fresh ingredients. Great coffee. Memorable moments. Choose your favourite dishes and add them to a reservation in one smooth flow.</p>
+                </motion.section>
 
-                    {/* Category Tabs */}
-                    <div className="flex flex-wrap justify-center gap-3">
-                        {categories.map((category, index) => (
-                            <motion.button
-                                key={category}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.1 }}
-                                onClick={() => setSelectedCategory(category)}
-                                className={`px-6 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${selectedCategory === category
-                                    ? 'bg-white text-teal-600 shadow-lg'
-                                    : 'bg-white/20 text-white hover:bg-white/30 border border-white/30'
-                                    }`}
-                            >
-                                {category}
-                            </motion.button>
-                        ))}
-                    </div>
-
-                    {/* Search Bar */}
-                    <div className="max-w-md mx-auto mt-6">
-                        <div className="relative">
-                            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                            <input
-                                type="text"
-                                placeholder="Search dishes..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 bg-white border-0 rounded-full text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-300 shadow-lg transition-all"
-                            />
-                        </div>
-                    </div>
+                <div className="mt-6 flex flex-wrap justify-center gap-2" aria-label="Dish categories">
+                    {categories.map((category) => <button type="button" key={category} aria-pressed={selectedCategory === category} onClick={() => setSelectedCategory(category)} className={`rounded-full border px-5 py-2 text-sm font-semibold transition ${selectedCategory === category ? 'border-teal-700 bg-teal-700 text-white' : 'border-teal-100 bg-white/95 text-teal-900 hover:bg-teal-50'}`}>{category}</button>)}
                 </div>
-            </div>
-
-            {/* Main Content */}
-            <div className="container mx-auto px-4 py-12">
-                <div className="flex flex-col lg:flex-row gap-8">
-                    {/* Left Panel - Featured Images */}
-                    <motion.div
-                        initial={{ opacity: 0, x: -50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="lg:w-2/5"
-                    >
-                        <div className="sticky top-24">
-                            {/* Main Featured Image */}
-                            <div className="relative rounded-3xl overflow-hidden h-[500px] bg-gray-200 shadow-xl">
-                                <AnimatePresence mode="wait">
-                                    {featuredImages.length > 0 && (
-                                        <motion.img
-                                            key={activeImageIndex}
-                                            initial={{ opacity: 0, scale: 1.1 }}
-                                            animate={{ opacity: 1, scale: 1 }}
-                                            exit={{ opacity: 0, scale: 0.9 }}
-                                            transition={{ duration: 0.5 }}
-                                            src={featuredImages[activeImageIndex]}
-                                            alt="Featured dish"
-                                            className="w-full h-full object-cover"
-                                        />
-                                    )}
-                                </AnimatePresence>
-
-                                {/* Overlay Gradient */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-
-                                {/* Image Indicators */}
-                                {featuredImages.length > 1 && (
-                                    <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-2">
-                                        {featuredImages.map((_, idx) => (
-                                            <button
-                                                key={idx}
-                                                onClick={() => setActiveImageIndex(idx)}
-                                                className={`w-2 h-2 rounded-full transition-all ${idx === activeImageIndex
-                                                    ? 'bg-white w-6'
-                                                    : 'bg-white/50 hover:bg-white/70'
-                                                    }`}
-                                            />
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* Thumbnail Grid */}
-                            <div className="grid grid-cols-4 gap-3 mt-4">
-                                {featuredImages.slice(0, 4).map((img, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => setActiveImageIndex(idx)}
-                                        className={`aspect-square rounded-xl overflow-hidden border-2 transition-all shadow-md ${idx === activeImageIndex
-                                            ? 'border-teal-500 scale-95'
-                                            : 'border-transparent opacity-70 hover:opacity-100'
-                                            }`}
-                                    >
-                                        <img
-                                            src={img}
-                                            alt={`Dish ${idx + 1}`}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    {/* Right Panel - Menu List */}
-                    <motion.div
-                        initial={{ opacity: 0, x: 50 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="lg:w-3/5"
-                    >
-                        {filteredMenu.length === 0 ? (
-                            <div className="text-center py-20">
-                                <p className="text-xl text-gray-500">No dishes found</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                <AnimatePresence>
-                                    {filteredMenu.map((item, index) => (
-                                        <motion.div
-                                            key={item.id}
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: -20 }}
-                                            transition={{ delay: index * 0.05 }}
-                                            className="group bg-white rounded-2xl shadow-md hover:shadow-xl border border-gray-100 hover:border-teal-200 transition-all overflow-hidden"
-                                        >
-                                            <div className="p-4">
-                                                <div className="flex gap-4">
-                                                    {/* Dish Image */}
-                                                    <div className="relative w-28 h-28 rounded-xl overflow-hidden flex-shrink-0 bg-gray-100">
-                                                        <img
-                                                            src={item.image || 'https://placehold.co/200/f3f4f6/0F4C4C?text=No+Image'}
-                                                            alt={item.name}
-                                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                                                        />
-
-                                                    </div>
-
-                                                    {/* Dish Info */}
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-start justify-between gap-4">
-                                                            <div className="flex-1">
-                                                                <h3 className="text-lg font-semibold text-gray-800 group-hover:text-teal-600 transition-colors">
-                                                                    {item.name}
-                                                                </h3>
-                                                                <p className="text-gray-500 text-sm mt-1 line-clamp-2">
-                                                                    {item.description || 'Món ngon từ thực đơn của chúng tôi'}
-                                                                </p>
-
-
-                                                            </div>
-                                                            <div className="text-right flex-shrink-0">
-                                                                <p className="text-xl font-bold text-teal-600">
-                                                                    {item.price?.toLocaleString('vi-VN')}₫
-                                                                </p>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Add to Cart Button */}
-                                                        <div className="flex items-center justify-end mt-3">
-                                                            {cart.find(i => i.id === item.id) ? (
-                                                                <div className="flex items-center gap-2 bg-teal-50 rounded-full p-1">
-                                                                    <button
-                                                                        onClick={() => updateQuantity(item.id, cart.find(i => i.id === item.id).quantity - 1)}
-                                                                        className="w-8 h-8 rounded-full bg-teal-100 text-teal-600 hover:bg-teal-500 hover:text-white transition-colors flex items-center justify-center"
-                                                                    >
-                                                                        <Minus className="w-4 h-4" />
-                                                                    </button>
-                                                                    <span className="w-8 text-center text-teal-700 font-semibold">
-                                                                        {cart.find(i => i.id === item.id).quantity}
-                                                                    </span>
-                                                                    <button
-                                                                        onClick={() => updateQuantity(item.id, cart.find(i => i.id === item.id).quantity + 1)}
-                                                                        className="w-8 h-8 rounded-full bg-teal-500 text-white hover:bg-teal-600 transition-colors flex items-center justify-center"
-                                                                    >
-                                                                        <Plus className="w-4 h-4" />
-                                                                    </button>
-                                                                </div>
-                                                            ) : (
-                                                                <button
-                                                                    onClick={() => addToCart(item)}
-                                                                    className="flex items-center gap-2 px-4 py-2 bg-teal-50 text-teal-600 rounded-full hover:bg-teal-500 hover:text-white transition-all text-sm font-medium border border-teal-200 hover:border-teal-500"
-                                                                >
-                                                                    <Plus className="w-4 h-4" />
-                                                                    Make orders
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-
-                                        </motion.div>
-                                    ))}
-                                </AnimatePresence>
-                            </div>
-                        )}
-                    </motion.div>
+                <div className="relative mx-auto mt-5 w-full">
+                    <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+                    <input aria-label="Search dishes" type="search" placeholder="Search dishes, coffee, or anything delicious..." value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="w-full rounded-full border border-teal-100 bg-white/95 py-3 pl-12 pr-5 text-sm text-slate-800 shadow-sm outline-none focus:ring-2 focus:ring-teal-600" />
                 </div>
+                <div className="mt-5 grid items-center gap-5 md:grid-cols-[minmax(0,1fr)_240px]">
+                    {priceFilter}
+                    <label className="flex items-center gap-3 text-sm text-teal-900">
+                        <span className="shrink-0">Sort by</span>
+                        <select value={sortBy} onChange={(event) => setSortBy(event.target.value)} className="min-w-0 flex-1 rounded-full border border-teal-100 bg-white px-4 py-3 focus:ring-2 focus:ring-teal-600">
+                            <option value="default">Menu order</option>
+                            <option value="price-asc">Price: low to high</option>
+                            <option value="price-desc">Price: high to low</option>
+                            <option value="name">Name: A to Z</option>
+                        </select>
+                    </label>
+                </div>
+                <p aria-live="polite" className="mt-2 text-xs text-slate-600">{displayedMenu.length} dishes · {minPrice.toLocaleString('vi-VN')}₫ - {maxPrice.toLocaleString('vi-VN')}₫</p>
+                {displayedMenu.length === 0 ? <div className="py-16 text-center"><p className="text-lg text-slate-600">No dishes found</p><button type="button" className="mt-3 text-sm font-semibold text-teal-700 underline" onClick={() => { setSearchTerm(''); setSelectedCategory('All'); setMinPrice(0); setMaxPrice(priceBounds.max); }}>Reset filters</button></div> : <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">{displayedMenu.map((item) => <DishCard key={item.id} item={item} cart={cart} favoriteIds={favoriteIds} toggleFavorite={toggleFavorite} addToCart={addToCart} updateQuantity={updateQuantity} />)}</div>}
             </div>
-
             {/* Floating Cart */}
             <AnimatePresence>
                 {cart.length > 0 && (

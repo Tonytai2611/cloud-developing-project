@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Header from './components/layout/Header';
 import Footer from './components/layout/Footer';
@@ -12,18 +12,45 @@ import Table from './pages/Table';
 import UserProfile from './pages/UserProfile';
 import VerifyEmail from './pages/VerifyEmail';
 import MyBookings from './pages/MyBookings';
+import MyFavourites from './pages/MyFavourites';
 import Admin from './pages/admin/Admin';
 import AdminManageMenu from './pages/admin/AdminManageMenuCategory';
 import AdminManageTable from './pages/admin/AdminManageTable';
 import AdminManageOrderingFood from './pages/admin/AdminManageOrderingFood';
-import AdminChatWithUsers from './pages/admin/AdminChatWithUsers';
+import AdminChat from './pages/admin/AdminChat';
 import AdminMenuCategoryForm from './pages/admin/AdminMenuCategoryForm';
 import { Toaster } from 'sonner';
 import './App.css';
+import { AdminNavigationCountsProvider } from './components/admin/dashboard/hooks/useAdminNavigationCounts';
 
 // Layout component để xử lý conditional header/footer
 function Layout({ children }) {
   const location = useLocation();
+
+  useEffect(() => {
+    if (!location.hash) return;
+
+    const sectionId = decodeURIComponent(location.hash.slice(1));
+    let frameId;
+    let attempts = 0;
+
+    const scrollToSection = () => {
+      const section = document.getElementById(sectionId);
+
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+
+      if (attempts < 10) {
+        attempts += 1;
+        frameId = window.requestAnimationFrame(scrollToSection);
+      }
+    };
+
+    frameId = window.requestAnimationFrame(scrollToSection);
+    return () => window.cancelAnimationFrame(frameId);
+  }, [location.pathname, location.hash]);
 
   const noHeaderPages = [
     "/admin",
@@ -36,18 +63,15 @@ function Layout({ children }) {
     "/admin/chat-with-users"
   ];
 
-  const excludedChatboxPages = ["/user-profile", "/register"];
-
   const showHeader = !noHeaderPages.includes(location.pathname);
-  const showChatbox = !excludedChatboxPages.includes(location.pathname);
-  const paddingTopClass = showHeader ? "pt-[70px]" : "";
+  const paddingTopClass = showHeader ? "pt-20" : "";
 
   return (
     <div className="min-h-screen bg-slate-100 text-black">
       <Toaster position="top-right" richColors closeButton />
       {showHeader && <Header />}
       <div className={paddingTopClass}>
-        {children}
+        {location.pathname.startsWith('/admin') ? <AdminNavigationCountsProvider>{children}</AdminNavigationCountsProvider> : children}
       </div>
       {showHeader && <Footer />}
       {/* UserChat removed - now using /chat page */}
@@ -70,6 +94,7 @@ function App() {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/chat" element={<UserChatPage />} />
           <Route path="/my-bookings" element={<MyBookings />} />
+          <Route path="/my-favourites" element={<MyFavourites />} />
 
           {/* Admin routes */}
           <Route path="/admin" element={<Admin />} />
@@ -77,7 +102,7 @@ function App() {
           <Route path="/admin/manage-menu/form" element={<AdminMenuCategoryForm />} />
           <Route path="/admin/manage-table" element={<AdminManageTable />} />
           <Route path="/admin/manage-ordering-food" element={<AdminManageOrderingFood />} />
-          <Route path="/admin/chat-with-users" element={<AdminChatWithUsers />} />
+          <Route path="/admin/chat-with-users" element={<AdminChat />} />
 
           {/* Redirect unknown routes */}
           <Route path="*" element={<Navigate to="/" replace />} />

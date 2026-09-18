@@ -8,6 +8,11 @@ output "task_definition_arn" {
   value       = aws_ecs_task_definition.backend.arn
 }
 
+output "task_role_arn" {
+  description = "The ARN of the ECS task runtime role"
+  value       = aws_iam_role.task.arn
+}
+
 output "service_name" {
   description = "The name of the created ECS service"
   value       = aws_ecs_service.backend.name

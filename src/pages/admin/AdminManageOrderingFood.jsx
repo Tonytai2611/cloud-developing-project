@@ -1,3 +1,3 @@
-import AdminManageOrderingFoodPage from '../../components/admin/ui/AdminManageOrderingFoodPage';
+import OrderManagementPage from '../../components/admin/order/ui/OrderManagementPage';
 
-export default AdminManageOrderingFoodPage;
+export default OrderManagementPage;

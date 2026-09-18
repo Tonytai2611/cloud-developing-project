@@ -144,7 +144,10 @@ export const menuApi = {
             });
 
             if (!response.ok) {
-                const error = await response.json();
+                const contentType = response.headers.get('content-type') || '';
+                const error = contentType.includes('application/json')
+                    ? await response.json()
+                    : { error: await response.text() };
                 throw new Error(error.error || 'Failed to upload image');
             }
 

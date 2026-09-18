@@ -1,0 +1,149 @@
+locals {
+  name_prefix = "${var.project_name}-${var.environment}"
+}
+
+resource "aws_dynamodb_table" "users" {
+  name         = "${local.name_prefix}-users"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "id"
+
+  attribute {
+    name = "id"
+    type = "S"
+  }
+
+  server_side_encryption {
+    enabled = true
+  }
+
+  point_in_time_recovery {
+    enabled = var.enable_point_in_time_recovery
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      "Name"        = "${local.name_prefix}-users"
+      "Project"     = var.project_name
+      "Environment" = var.environment
+    }
+  )
+}
+
+resource "aws_dynamodb_table" "menu" {
+  name         = "${local.name_prefix}-menu"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "id"
+
+  attribute {
+    name = "id"
+    type = "S"
+  }
+
+  server_side_encryption {
+    enabled = true
+  }
+
+  point_in_time_recovery {
+    enabled = var.enable_point_in_time_recovery
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      "Name"        = "${local.name_prefix}-menu"
+      "Project"     = var.project_name
+      "Environment" = var.environment
+    }
+  )
+}
+
+resource "aws_dynamodb_table" "tables" {
+  name         = "${local.name_prefix}-tables"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "id"
+
+  attribute {
+    name = "id"
+    type = "S"
+  }
+
+  server_side_encryption {
+    enabled = true
+  }
+
+  point_in_time_recovery {
+    enabled = var.enable_point_in_time_recovery
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      "Name"        = "${local.name_prefix}-tables"
+      "Project"     = var.project_name
+      "Environment" = var.environment
+    }
+  )
+}
+
+resource "aws_dynamodb_table" "bookings" {
+  name         = "${local.name_prefix}-bookings"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "id"
+
+  attribute {
+    name = "id"
+    type = "S"
+  }
+
+  server_side_encryption {
+    enabled = true
+  }
+
+  point_in_time_recovery {
+    enabled = var.enable_point_in_time_recovery
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      "Name"        = "${local.name_prefix}-bookings"
+      "Project"     = var.project_name
+      "Environment" = var.environment
+    }
+  )
+}
+
+resource "aws_dynamodb_table" "favorites" {
+  name         = "${local.name_prefix}-favorites"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "userId"
+  range_key    = "dishId"
+
+  attribute {
+    name = "userId"
+    type = "S"
+  }
+
+  attribute {
+    name = "dishId"
+    type = "S"
+  }
+
+  server_side_encryption {
+    enabled = true
+  }
+
+  point_in_time_recovery {
+    enabled = var.enable_point_in_time_recovery
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      "Name"        = "${local.name_prefix}-favorites"
+      "Project"     = var.project_name
+      "Environment" = var.environment
+    }
+  )
+}

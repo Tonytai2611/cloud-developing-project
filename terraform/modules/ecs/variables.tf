@@ -56,6 +56,38 @@ variable "container_port" {
   nullable    = false
 }
 
+variable "environment_variables" {
+  description = "Environment variables passed to the ECS container"
+  type        = map(string)
+  default     = {}
+  nullable    = false
+}
+
+variable "users_table_arn" {
+  description = "ARN of the DynamoDB users table that the ECS task can access"
+  type        = string
+  nullable    = false
+}
+
+variable "additional_dynamodb_table_arns" {
+  description = "Additional DynamoDB table ARNs that the ECS task can access"
+  type        = list(string)
+  default     = []
+  nullable    = false
+}
+
+variable "cognito_user_pool_arn" {
+  description = "ARN of the Cognito user pool that the ECS task can access"
+  type        = string
+  nullable    = false
+}
+
+variable "image_bucket_arn" {
+  description = "ARN of the S3 image bucket that the ECS task can access"
+  type        = string
+  nullable    = false
+}
+
 variable "desired_count" {
   description = "The desired number of ECS tasks to run"
   type        = number

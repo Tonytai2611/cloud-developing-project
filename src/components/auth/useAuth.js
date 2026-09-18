@@ -4,6 +4,30 @@ import { env } from '../../config/env';
 
 const API_URL = env.apiBaseUrl;
 
+async function parseAuthResponse(response, fallbackMessage) {
+  const contentType = response.headers.get('content-type') || '';
+
+  if (!contentType.includes('application/json')) {
+    await response.text();
+    throw new Error('Auth API returned a non-JSON response. Check that the backend is running and API routes are proxied correctly.');
+  }
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.error || data.message || fallbackMessage);
+  }
+
+  return data;
+}
+
+function normalizeFetchError(error, serviceName) {
+  if (error instanceof TypeError && error.message === 'Failed to fetch') {
+    return new Error(`${serviceName} is unreachable. For local dev, start the backend with npm run server. For CloudFront, rebuild without a localhost API URL.`);
+  }
+
+  return error;
+}
+
 // Auth Context
 const AuthContext = createContext(null);
 
@@ -35,30 +59,33 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await fetch(`${API_URL}/login`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Login failed');
-      }
+      const data = await parseAuthResponse(response, 'Login failed');
 
-      const data = await response.json();
+      const userInfo = data.userInfo || {
+        username,
+        isAdmin: !!data.isAdmin,
+        role: data.isAdmin ? 'admin' : 'customer',
+      };
 
       // Save tokens to localStorage
-      localStorage.setItem('accessToken', data.accessToken);
-      localStorage.setItem('idToken', data.idToken);
-      localStorage.setItem('refreshToken', data.refreshToken);
+      if (data.accessToken) localStorage.setItem('accessToken', data.accessToken);
+      if (data.idToken) localStorage.setItem('idToken', data.idToken);
+      if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
 
       // Update state
-      setAccessToken(data.accessToken);
-      setUser(data.userInfo);
+      setAccessToken(data.accessToken || null);
+      setUser(userInfo);
 
-      return data;
+      return { ...data, userInfo };
     } catch (error) {
-      console.error('Login error:', error);
-      throw error;
+      const normalizedError = normalizeFetchError(error, 'Auth API');
+      console.error('Login error:', normalizedError);
+      throw normalizedError;
     }
   };
 
@@ -83,24 +110,24 @@ export const AuthProvider = ({ children }) => {
       }
 
       const response = await fetch(`${API_URL}/me`, {
+        credentials: 'include',
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
-      if (!response.ok) {
+      if (response.status === 401) {
         // Token expired or invalid
-        if (response.status === 401) {
-          await logout();
-        }
+        await logout();
         throw new Error('Failed to get user info');
       }
 
-      const data = await response.json();
+      const data = await parseAuthResponse(response, 'Failed to get user info');
       setUser(data.userInfo);
       return data.userInfo;
     } catch (error) {
-      console.error('Get user info error:', error);
+      const normalizedError = normalizeFetchError(error, 'Auth API');
+      console.error('Get user info error:', normalizedError);
       setUser(null);
       return null;
     } finally {

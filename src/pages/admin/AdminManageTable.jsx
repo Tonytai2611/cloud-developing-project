@@ -1,3 +1,3 @@
-import AdminManageTablePage from '../../components/admin/ui/AdminManageTablePage';
+import TableManagementPage from '../../components/admin/table/ui/TableManagementPage';
 
-export default AdminManageTablePage;
+export default TableManagementPage;
