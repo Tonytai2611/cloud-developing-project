@@ -45,7 +45,7 @@ export default function UserChat({ userEmail }) {
         const connectWebSocket = () => {
             try {
                 console.log('Connecting WebSocket for user:', userEmail);
-                const websocket = new WebSocket(`${WS_URL}?userId=${encodeURIComponent(userEmail)}&role=customer`);
+        const websocket = new WebSocket(`${WS_URL}?userId=${encodeURIComponent(userEmail)}&role=customer&accessToken=${encodeURIComponent(localStorage.getItem('accessToken') || '')}`);
 
                 websocket.onopen = () => {
                     console.log(' User WebSocket connected for:', userEmail);

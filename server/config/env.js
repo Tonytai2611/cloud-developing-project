@@ -16,6 +16,8 @@ const env = {
   tablesTable: process.env.TABLES_TABLE,
   favoritesTable: process.env.FAVORITES_TABLE,
   imageBucket: process.env.IMAGE_BUCKET,
+  adminNotificationsTable: process.env.ADMIN_NOTIFICATIONS_TABLE,
+  analyticsSummaryTable: process.env.ANALYTICS_SUMMARY_TABLE,
   contactHandlerFunctionName: process.env.CONTACT_HANDLER_FUNCTION_NAME,
   uploadImageFunctionName: process.env.UPLOAD_IMAGE_FUNCTION_NAME,
   bookingEventsTopicArn: process.env.BOOKING_EVENTS_TOPIC_ARN,

@@ -38,6 +38,11 @@ output "bookings_table_arn" {
   value       = aws_dynamodb_table.bookings.arn
 }
 
+output "bookings_stream_arn" {
+  description = "DynamoDB Streams ARN for the bookings table."
+  value       = aws_dynamodb_table.bookings.stream_arn
+}
+
 output "favorites_table_name" {
   description = "The name of the user favourites table."
   value       = aws_dynamodb_table.favorites.name

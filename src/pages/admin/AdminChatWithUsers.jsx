@@ -112,7 +112,7 @@ const AdminChatWithUsers = () => {
     const connectWebSocket = () => {
       try {
         console.log('Connecting WebSocket as admin:', adminEmail);
-        const socket = new WebSocket(`${WS_URL}?userId=${adminEmail}&role=admin`);
+        const socket = new WebSocket(`${WS_URL}?userId=${adminEmail}&role=admin&accessToken=${encodeURIComponent(localStorage.getItem('accessToken') || '')}`);
 
         socket.onopen = () => {
           console.log('WebSocket connected');

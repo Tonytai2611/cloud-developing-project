@@ -35,3 +35,14 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "cognito_user_pool_id" {
+  description = "Cognito user pool used to authorize WebSocket clients."
+  type        = string
+}
+
+variable "admin_group_name" {
+  description = "Cognito group that grants admin WebSocket access."
+  type        = string
+  default     = "admin"
+}

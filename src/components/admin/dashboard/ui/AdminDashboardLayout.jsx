@@ -16,9 +16,10 @@ export default function AdminDashboardLayout(props) {
         <AdminTopbar user={props.user} query={props.query} setQuery={props.setQuery} onLogout={props.onLogout} />
         <main className="mx-auto max-w-[1600px] space-y-5 p-4 sm:p-6 lg:p-7">
           <WelcomeBanner user={props.user} />
-          <StatsGrid />
+          {props.dashboardError ? <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"><p className="font-bold">Unable to load dashboard data.</p><p className="mt-1">{props.dashboardError.message}</p><button type="button" onClick={props.retryDashboard} className="mt-3 rounded-lg bg-red-700 px-3 py-2 font-bold text-white">Retry</button></div> : null}
+          <StatsGrid summary={props.summary} loading={props.dashboardLoading} />
           <QuickActions actions={props.actions} navigate={props.navigate} query={props.query} />
-          <DashboardPanels />
+          <DashboardPanels summary={props.summary} loading={props.dashboardLoading} />
         </main>
       </div>
     </div>

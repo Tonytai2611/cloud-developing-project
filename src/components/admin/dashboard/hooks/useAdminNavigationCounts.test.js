@@ -33,19 +33,19 @@ test('keeps both badges and socket across routes; clears only viewed items', asy
   try {
     await act(async () => root.render(<MemoryRouter initialEntries={['/admin']}><AdminNavigationCountsProvider><Probe /></AdminNavigationCountsProvider></MemoryRouter>));
     act(() => sockets[0].onmessage({ data: JSON.stringify({ type: 'conversationList', conversations: [{ userId: 'customer', unread: 2 }] }) }));
-    expect(JSON.parse(container.textContent)).toEqual({ Orders: 2, Chat: 2 });
+    expect(JSON.parse(container.textContent)).toEqual({ 'Bookings & Orders': 2, Chat: 2 });
     await act(async () => navigate('/admin/manage-menu'));
-    expect(JSON.parse(container.textContent)).toEqual({ Orders: 2, Chat: 2 });
+    expect(JSON.parse(container.textContent)).toEqual({ 'Bookings & Orders': 2, Chat: 2 });
     expect(bookingApi.list).toHaveBeenCalledTimes(1);
     expect(sockets).toHaveLength(1);
     await act(async () => navigate('/admin/manage-ordering-food'));
-    expect(JSON.parse(container.textContent)).toEqual({ Orders: 0, Chat: 2 });
+    expect(JSON.parse(container.textContent)).toEqual({ 'Bookings & Orders': 0, Chat: 2 });
     act(() => window.dispatchEvent(new CustomEvent('brewcraft:chat-read', { detail: { email: 'customer', timestamp: '2026-09-12T10:00:00Z' } })));
-    expect(JSON.parse(container.textContent)).toEqual({ Orders: 0, Chat: 0 });
+    expect(JSON.parse(container.textContent)).toEqual({ 'Bookings & Orders': 0, Chat: 0 });
     act(() => sockets[0].onmessage({ data: JSON.stringify({ type: 'conversationList', conversations: [{ userId: 'customer', unread: 2, lastTimestamp: '2026-09-12T09:59:00Z' }] }) }));
-    expect(JSON.parse(container.textContent)).toEqual({ Orders: 0, Chat: 0 });
+    expect(JSON.parse(container.textContent)).toEqual({ 'Bookings & Orders': 0, Chat: 0 });
     act(() => sockets[0].onmessage({ data: JSON.stringify({ type: 'conversationList', conversations: [{ userId: 'customer', unread: 1, lastTimestamp: '2026-09-12T10:01:00Z' }] }) }));
-    expect(JSON.parse(container.textContent)).toEqual({ Orders: 0, Chat: 1 });
+    expect(JSON.parse(container.textContent)).toEqual({ 'Bookings & Orders': 0, Chat: 1 });
     expect(JSON.parse(localStorage.getItem('brewcraft-admin-seen:admin@test')).orders).toHaveLength(2);
   } finally {
     act(() => root.unmount());

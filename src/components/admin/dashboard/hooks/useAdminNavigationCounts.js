@@ -4,7 +4,7 @@ import { bookingApi } from '../../../booking/services/bookingApi';
 import { useAuth } from '../../../../hooks/useAuth';
 import { env } from '../../../../config/env';
 
-const CountsContext = createContext({ Orders: null, Chat: null });
+const CountsContext = createContext({ 'Bookings & Orders': null, Chat: null });
 
 export function AdminNavigationCountsProvider({ children }) {
   const { user } = useAuth();
@@ -12,11 +12,11 @@ export function AdminNavigationCountsProvider({ children }) {
   const pathRef = useRef(pathname);
   pathRef.current = pathname;
   const adminEmail = user?.email || user?.username;
-  const [counts, setCounts] = useState({ Orders: null, Chat: null });
+  const [counts, setCounts] = useState({ 'Bookings & Orders': null, Chat: null });
   const refreshRef = useRef(() => {});
 
   useEffect(() => {
-    setCounts({ Orders: null, Chat: null });
+    setCounts({ 'Bookings & Orders': null, Chat: null });
     if (!adminEmail) return undefined;
     const storageKey = `brewcraft-admin-seen:${adminEmail}`;
     let saved = {};
@@ -38,7 +38,7 @@ export function AdminNavigationCountsProvider({ children }) {
         bookings.forEach((item) => seenOrders.add(item.id));
         persist();
       }
-      setCounts((current) => ({ ...current, Orders: bookings.filter((item) => !seenOrders.has(item.id)).length }));
+      setCounts((current) => ({ ...current, 'Bookings & Orders': bookings.filter((item) => !seenOrders.has(item.id)).length }));
     };
     const refreshOrders = async () => {
       if (pending) return;
@@ -67,7 +67,7 @@ export function AdminNavigationCountsProvider({ children }) {
     };
     const connect = () => {
       if (!env.websocketUrl) return;
-      socket = new WebSocket(`${env.websocketUrl}?userId=${encodeURIComponent(adminEmail)}&role=admin`);
+      socket = new WebSocket(`${env.websocketUrl}?userId=${encodeURIComponent(adminEmail)}&role=admin&accessToken=${encodeURIComponent(localStorage.getItem('accessToken') || '')}`);
       socket.onopen = refreshChat;
       socket.onmessage = (event) => {
         if (!active) return;

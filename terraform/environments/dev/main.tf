@@ -118,7 +118,21 @@ module "websocket_chat" {
   lambda_source_path            = abspath("${path.root}/../../../lambda/chat_handler.py")
   enable_point_in_time_recovery = true
   stage_name                    = "production"
+  cognito_user_pool_id          = var.cognito_user_pool_id
+  admin_group_name              = var.admin_group_name
   tags                          = local.common_tags
+}
+
+module "analytics" {
+  source = "../../modules/analytics"
+
+  project_name        = var.project_name
+  environment         = var.environment
+  aws_region          = var.aws_region
+  bookings_table_name = module.dynamodb.bookings_table_name
+  bookings_stream_arn = module.dynamodb.bookings_stream_arn
+  lambda_source_path  = abspath("${path.root}/../../../lambda/analytics_aggregator.py")
+  tags                = local.common_tags
 }
 
 module "notifications" {
@@ -165,6 +179,7 @@ module "ecs" {
     USERS_TABLE                   = module.dynamodb.users_table_name
     FAVORITES_TABLE               = module.dynamodb.favorites_table_name
     BOOKING_EVENTS_TOPIC_ARN      = module.notifications.booking_events_topic_arn
+    ANALYTICS_SUMMARY_TABLE       = module.analytics.summary_table_name
     CONTACT_HANDLER_FUNCTION_NAME = module.notifications.contact_handler_function_name
   }
 
@@ -175,7 +190,8 @@ module "ecs" {
     module.dynamodb.bookings_table_arn,
     module.dynamodb.menu_table_arn,
     module.dynamodb.tables_table_arn,
-    module.dynamodb.favorites_table_arn
+    module.dynamodb.favorites_table_arn,
+    module.analytics.summary_table_arn
   ]
   cognito_user_pool_arn = "arn:aws:cognito-idp:${var.aws_region}:${data.aws_caller_identity.current.account_id}:userpool/${var.cognito_user_pool_id}"
   image_bucket_arn      = module.image_bucket.image_bucket_arn
@@ -221,7 +237,8 @@ module "frontend_hosting" {
     "/deleteMenuItem",
     "/getMenu",
     "/favorites",
-    "/favorites/*"
+    "/favorites/*",
+    "/api/admin/*"
   ]
   tags = local.common_tags
 }

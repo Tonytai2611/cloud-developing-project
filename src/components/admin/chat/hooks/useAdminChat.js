@@ -48,7 +48,7 @@ export function useAdminChat() {
       return undefined;
     }
 
-    const socket = new WebSocket(`${env.websocketUrl}?userId=${encodeURIComponent(adminEmail)}&role=admin`);
+    const socket = new WebSocket(`${env.websocketUrl}?userId=${encodeURIComponent(adminEmail)}&role=admin&accessToken=${encodeURIComponent(localStorage.getItem('accessToken') || '')}`);
     socketRef.current = socket;
     setLoading(true);
     let customerLookupTimer;

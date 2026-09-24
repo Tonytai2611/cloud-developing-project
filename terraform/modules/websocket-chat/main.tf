@@ -136,6 +136,14 @@ resource "aws_iam_role_policy" "chat_lambda" {
           "execute-api:ManageConnections"
         ]
         Resource = "${aws_apigatewayv2_api.chat.execution_arn}/*/*/@connections/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "cognito-idp:GetUser",
+          "cognito-idp:AdminListGroupsForUser"
+        ]
+        Resource = "*"
       }
     ]
   })
@@ -155,6 +163,8 @@ resource "aws_lambda_function" "chat_handler" {
     variables = {
       CHAT_CONNECTIONS_TABLE = aws_dynamodb_table.chat_connections.name
       CHAT_MESSAGES_TABLE    = aws_dynamodb_table.chat_messages.name
+      COGNITO_USER_POOL_ID   = var.cognito_user_pool_id
+      ADMIN_GROUP_NAME       = var.admin_group_name
     }
   }
 

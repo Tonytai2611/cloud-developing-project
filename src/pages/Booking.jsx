@@ -145,6 +145,7 @@ export default function Booking() {
                       loading={loading}
                       selectedItems={selectedItems}
                       totalPrice={totalPrice}
+                      onAddFood={() => navigate('/menu', { state: { selectedTable } })}
                       onChange={handleChange}
                       onSubmit={handleSubmit}
                     />

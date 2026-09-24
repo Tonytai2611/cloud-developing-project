@@ -19,7 +19,7 @@ export default function AdminSidebar({ currentPath, navigate }) {
       >
         <Icon className={`h-5 w-5 ${active ? 'text-teal-700' : 'text-slate-500 group-hover:text-teal-700'}`} />
         <span className="flex-1">{item.label}</span>
-        {counts[item.label] > 0 && <span title={item.label === 'Orders' ? 'Unseen orders' : 'Unread messages'} className="rounded-md bg-emerald-600 px-2 py-0.5 text-xs text-white">{counts[item.label]}</span>}
+        {counts[item.label] > 0 && <span title={item.label === 'Bookings & Orders' ? 'Unseen bookings and orders' : 'Unread messages'} className="rounded-md bg-emerald-600 px-2 py-0.5 text-xs text-white">{counts[item.label]}</span>}
       </button>
     );
   };

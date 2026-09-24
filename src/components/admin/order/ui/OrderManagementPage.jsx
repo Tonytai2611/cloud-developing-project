@@ -3,6 +3,7 @@ import { CalendarDays, Check, CheckCircle2, ChevronLeft, ChevronRight, Clock3, C
 import { useNavigate } from 'react-router-dom';
 import { useAdminOrdering } from '../../hooks/useAdminOrdering';
 import AdminWorkspaceShell from '../../shared/AdminWorkspaceShell';
+import BookingEditModal from './BookingEditModal';
 
 const money = (value) => new Intl.NumberFormat('vi-VN', { maximumFractionDigits: 0 }).format(Number(value || 0)) + ' đ';
 
@@ -54,11 +55,14 @@ function OrderItems({ booking, compact = false }) {
   );
 }
 
-function OrderActions({ booking, expanded, loading, onToggle, onApprove, onReject, onDelete }) {
+function OrderActions({ booking, expanded, loading, onToggle, onEdit, onApprove, onReject, onDelete }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <button onClick={onToggle} className="inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-700 hover:bg-slate-50">
         <Eye className="h-4 w-4" /> Details
+      </button>
+      <button type="button" onClick={onEdit} aria-label="Edit booking" className="grid h-10 w-10 place-items-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">
+        <Pencil className="h-5 w-5" />
       </button>
       {booking.status === 'PENDING' ? (
         <>
@@ -70,9 +74,7 @@ function OrderActions({ booking, expanded, loading, onToggle, onApprove, onRejec
           </button>
         </>
       ) : (
-        <button type="button" aria-label="Edit order" className="grid h-10 w-10 place-items-center rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">
-          <Pencil className="h-5 w-5" />
-        </button>
+        null
       )}
       <button onClick={onDelete} disabled={loading} aria-label="Delete order" className="grid h-10 w-10 place-items-center rounded-lg bg-slate-100 text-slate-600 hover:bg-red-50 hover:text-red-600 disabled:opacity-50">
         <Trash2 className="h-5 w-5" />
@@ -112,8 +114,9 @@ export default function OrderManagementPage() {
   const navigate = useNavigate();
   const orders = useAdminOrdering();
   const [searchTerm, setSearchTerm] = useState('');
-  const [typeFilter, setTypeFilter] = useState('ALL');
+  const [typeFilter, setTypeFilter] = useState('TABLE');
   const [expandedId, setExpandedId] = useState(null);
+  const [editingBooking, setEditingBooking] = useState(null);
 
   const getTotal = (booking) => Number(booking.totalPrice || booking.total || 0);
   const stats = useMemo(() => ({
@@ -126,7 +129,7 @@ export default function OrderManagementPage() {
 
   const visibleOrders = useMemo(() => orders.filteredBookings.filter((booking) => {
     const total = getTotal(booking);
-    const typeMatches = typeFilter === 'ALL' || (typeFilter === 'TABLE' ? total === 0 : total > 0);
+    const typeMatches = typeFilter === 'TABLE' ? total === 0 : total > 0;
     const content = `${booking.id || ''} ${booking.customerName || ''} ${booking.email || ''} ${(booking.selectedItems || []).map((item) => item.name).join(' ')}`.toLowerCase();
     return typeMatches && content.includes(searchTerm.trim().toLowerCase());
   }), [orders.filteredBookings, searchTerm, typeFilter]);
@@ -140,11 +143,9 @@ export default function OrderManagementPage() {
   ];
 
   const filters = [
-    ['ALL', `All (${orders.bookings.length})`, () => { orders.setFilter('ALL'); setTypeFilter('ALL'); }],
-    ['PENDING', `Pending (${stats.pending})`, () => { orders.setFilter('PENDING'); setTypeFilter('ALL'); }],
-    ['CONFIRMED', `Confirmed (${stats.confirmed})`, () => { orders.setFilter('CONFIRMED'); setTypeFilter('ALL'); }],
-    ['TABLE', `Table Only (${stats.tableOnly})`, () => setTypeFilter(typeFilter === 'TABLE' ? 'ALL' : 'TABLE')],
-    ['FOOD', `Food + Table (${stats.food})`, () => setTypeFilter(typeFilter === 'FOOD' ? 'ALL' : 'FOOD')]
+    ['ALL', `All (${orders.bookings.length})`, () => orders.setFilter('ALL')],
+    ['PENDING', `Pending (${stats.pending})`, () => orders.setFilter('PENDING')],
+    ['CONFIRMED', `Confirmed (${stats.confirmed})`, () => orders.setFilter('CONFIRMED')]
   ];
 
   const renderActions = (booking) => (
@@ -153,6 +154,7 @@ export default function OrderManagementPage() {
       expanded={expandedId === booking.id}
       loading={orders.loading}
       onToggle={() => setExpandedId(expandedId === booking.id ? null : booking.id)}
+      onEdit={() => setEditingBooking(booking)}
       onApprove={() => orders.handleApprove(booking.id)}
       onReject={() => orders.handleReject(booking.id)}
       onDelete={() => orders.handleDelete(booking.id)}
@@ -160,7 +162,7 @@ export default function OrderManagementPage() {
   );
 
   return (
-    <AdminWorkspaceShell query={searchTerm} setQuery={setSearchTerm} searchPlaceholder="Search orders..." title="Order Management" subtitle="Review customer bookings and food orders.">
+    <AdminWorkspaceShell query={searchTerm} setQuery={setSearchTerm} searchPlaceholder="Search bookings or orders..." title="Bookings & Orders" subtitle="Manage table bookings and food orders in one place.">
       <div className="space-y-5 lg:space-y-6">
         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-white via-sky-50/80 to-teal-50 p-5 sm:p-6">
           <div className="pointer-events-none absolute right-6 top-4 hidden text-right text-xl font-light italic text-slate-300 xl:block">
@@ -169,9 +171,9 @@ export default function OrderManagementPage() {
           <nav className="mb-3 flex items-center gap-2 text-sm text-slate-500">
             <button onClick={() => navigate('/admin')} className="hover:text-teal-700">Dashboard</button>
             <ChevronRight className="h-4 w-4" />
-            <span className="font-bold text-teal-700">Orders</span>
+            <span className="font-bold text-teal-700">Bookings & Orders</span>
           </nav>
-          <h1 className="font-serif text-3xl font-black tracking-tight text-slate-950 sm:text-4xl xl:text-5xl">Manage Orders</h1>
+          <h1 className="font-serif text-3xl font-black tracking-tight text-slate-950 sm:text-4xl xl:text-5xl">Bookings & Orders</h1>
           <p className="mt-2 max-w-2xl text-base text-slate-500 sm:text-lg">Review and manage customer bookings and food orders.</p>
         </section>
 
@@ -187,6 +189,14 @@ export default function OrderManagementPage() {
         </section>
 
         <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+          <div className="mb-4 grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">
+            <button type="button" onClick={() => setTypeFilter('TABLE')} className={`rounded-lg px-4 py-3 text-sm font-black transition-colors ${typeFilter === 'TABLE' ? 'bg-white text-teal-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>
+              Table Bookings ({stats.tableOnly})
+            </button>
+            <button type="button" onClick={() => setTypeFilter('FOOD')} className={`rounded-lg px-4 py-3 text-sm font-black transition-colors ${typeFilter === 'FOOD' ? 'bg-white text-teal-800 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}>
+              Food Orders ({stats.food})
+            </button>
+          </div>
           <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-center">
             <label className="relative min-w-0 flex-1">
               <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
@@ -194,7 +204,7 @@ export default function OrderManagementPage() {
             </label>
             <div className="flex gap-2 overflow-x-auto pb-1">
               {filters.map(([value, label, onClick]) => {
-                const active = value === 'TABLE' || value === 'FOOD' ? typeFilter === value : orders.filter === value && typeFilter === 'ALL';
+                const active = orders.filter === value;
                 return <button key={value} onClick={onClick} className={`h-11 shrink-0 whitespace-nowrap rounded-xl px-4 text-sm font-bold transition-colors sm:px-5 ${active ? 'bg-teal-700 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>{label}</button>;
               })}
             </div>
@@ -291,6 +301,7 @@ export default function OrderManagementPage() {
           </div>
         </footer>
       </div>
+      {editingBooking && <BookingEditModal booking={editingBooking} tables={orders.tables} loading={orders.loading} onClose={() => setEditingBooking(null)} onSubmit={async (data) => { await orders.handleUpdate(editingBooking.id, data); setEditingBooking(null); }} />}
     </AdminWorkspaceShell>
   );
 }

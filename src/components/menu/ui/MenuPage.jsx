@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Search, Plus, Minus, X, ChevronRight, Heart, CalendarDays } from 'lucide-react';
 import { useMenuCatalog } from '../hooks/useMenuCatalog';
@@ -28,7 +28,9 @@ const clampPrice = (value, min, max) => Math.min(Math.max(Number(value) || min, 
 
 export default function Menu() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { user } = useAuth();
+    const selectedTable = location.state?.selectedTable;
     const {
         addToCart,
         cart,
@@ -102,7 +104,7 @@ export default function Menu() {
     );
 
     const goToBooking = () => {
-        navigate('/booking', { state: { selectedItems: cart } });
+        navigate('/booking', { state: { selectedItems: cart, selectedTable } });
     };
     const pageBackground = {
         backgroundImage: "url('/background.png')",

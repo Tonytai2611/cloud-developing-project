@@ -22,9 +22,15 @@ export default function Login() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Login failed');
-      if (data.tokens && data.tokens.IdToken) {
-        localStorage.setItem('idToken', data.tokens.IdToken);
-      }
+      // The admin API authenticates with Cognito's access token. Keep all
+      // tokens returned by the current backend (and support the legacy
+      // nested response shape) so a full page reload keeps the session.
+      const accessToken = data.accessToken || data.tokens?.AccessToken;
+      const idToken = data.idToken || data.tokens?.IdToken;
+      const refreshToken = data.refreshToken || data.tokens?.RefreshToken;
+      if (accessToken) localStorage.setItem('accessToken', accessToken);
+      if (idToken) localStorage.setItem('idToken', idToken);
+      if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
       window.location.reload();
     } catch (err) {
       setError(err.message || 'Login failed');

@@ -9,6 +9,9 @@ from decimal import Decimal
 dynamodb = boto3.resource('dynamodb')
 connections_table = dynamodb.Table(os.environ.get('CHAT_CONNECTIONS_TABLE', 'CHAT_CONNECTIONS'))
 messages_table = dynamodb.Table(os.environ.get('CHAT_MESSAGES_TABLE', 'CHAT_MESSAGES'))
+cognito = boto3.client('cognito-idp')
+COGNITO_USER_POOL_ID = os.environ.get('COGNITO_USER_POOL_ID', '')
+ADMIN_GROUP_NAME = os.environ.get('ADMIN_GROUP_NAME', 'admin')
 
 # API Gateway Management API client (for sending messages back to clients)
 # Endpoint will be set from environment variable
@@ -64,6 +67,23 @@ def handle_connect(event, connection_id):
     query_params = event.get('queryStringParameters') or {}
     user_id = query_params.get('userId', 'guest')
     role = query_params.get('role', 'customer')
+    access_token = query_params.get('accessToken', '')
+    if not access_token:
+        return {'statusCode': 401, 'body': 'Missing access token'}
+    try:
+        cognito_user = cognito.get_user(AccessToken=access_token)
+        attributes = {item['Name']: item['Value'] for item in cognito_user.get('UserAttributes', [])}
+        actual_user_id = attributes.get('email') or cognito_user.get('Username')
+        if user_id and user_id != actual_user_id:
+            return {'statusCode': 403, 'body': 'User identity mismatch'}
+        if role == 'admin':
+            groups = cognito.admin_list_groups_for_user(UserPoolId=COGNITO_USER_POOL_ID, Username=cognito_user['Username']).get('Groups', [])
+            if ADMIN_GROUP_NAME not in [group.get('GroupName') for group in groups] and attributes.get('custom:role') != 'admin':
+                return {'statusCode': 403, 'body': 'Admin access required'}
+        user_id = actual_user_id
+    except Exception as auth_error:
+        print(f"WebSocket auth failed: {auth_error}")
+        return {'statusCode': 401, 'body': 'Invalid or expired access token'}
     
     # Store connection
     connections_table.put_item(

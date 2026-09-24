@@ -93,7 +93,7 @@ const UserChatPage = () => {
         // Clear messages for new connection
         setMessages([]);
 
-        const socket = new WebSocket(`${WS_URL}?userId=${encodeURIComponent(userEmail)}&role=customer`);
+        const socket = new WebSocket(`${WS_URL}?userId=${encodeURIComponent(userEmail)}&role=customer&accessToken=${encodeURIComponent(localStorage.getItem('accessToken') || '')}`);
         let adminLookupTimer;
 
         socket.onopen = () => {

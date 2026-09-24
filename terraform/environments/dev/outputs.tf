@@ -78,6 +78,16 @@ output "booking_worker_function_name" {
   value       = module.notifications.booking_worker_function_name
 }
 
+output "analytics_summary_table_name" {
+  description = "Analytics summary DynamoDB table name."
+  value       = module.analytics.summary_table_name
+}
+
+output "analytics_aggregator_function_name" {
+  description = "Analytics aggregator Lambda function name."
+  value       = module.analytics.aggregator_function_name
+}
+
 output "contact_handler_function_name" {
   description = "Contact Us Lambda function name."
   value       = module.notifications.contact_handler_function_name

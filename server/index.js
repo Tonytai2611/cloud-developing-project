@@ -5,6 +5,7 @@ const { serialize, parse } = require('cookie');
 const { cognito, dynamodb, s3, sns } = require('./config/aws');
 const { env, warnMissingRuntimeConfig } = require('./config/env');
 const { invokeJsonLambda } = require('./services/lambdaInvoker.service');
+const { createAdminRouter } = require('./adminRoutes');
 
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
@@ -22,6 +23,15 @@ const TABLES_TABLE = env.tablesTable;
 const FAVORITES_TABLE = env.favoritesTable;
 const IMAGE_BUCKET = env.imageBucket;
 const BOOKING_EVENTS_TOPIC_ARN = env.bookingEventsTopicArn;
+
+const adminTables = {
+  users: USERS_TABLE,
+  menu: MENU_TABLE,
+  bookings: BOOKING_TABLE,
+  restaurantTables: TABLES_TABLE,
+  notifications: env.adminNotificationsTable,
+  analyticsSummary: env.analyticsSummaryTable,
+};
 
 function getConfiguredTable(tableName, res, label) {
   if (!tableName) {
@@ -370,6 +380,15 @@ app.post('/logout', (req, res) => {
   ]);
   return res.status(200).json({ message: 'Logged out successfully' });
 });
+
+app.use('/api/admin', createAdminRouter({
+  dynamodb,
+  cognito,
+  s3,
+  env,
+  tables: adminTables,
+  publishBookingEvent,
+}));
 
 app.get('/getMenu', async (req, res) => {
   const tableName = getConfiguredTable(MENU_TABLE, res, 'MENU_TABLE');

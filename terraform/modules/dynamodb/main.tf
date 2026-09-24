@@ -90,6 +90,8 @@ resource "aws_dynamodb_table" "bookings" {
   name         = "${local.name_prefix}-bookings"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "id"
+  stream_enabled   = true
+  stream_view_type = "NEW_AND_OLD_IMAGES"
 
   attribute {
     name = "id"

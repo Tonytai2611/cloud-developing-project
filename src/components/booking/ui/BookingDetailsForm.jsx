@@ -111,6 +111,7 @@ export default function BookingDetailsForm({
   selectedItems,
   totalPrice,
   onChange,
+  onAddFood,
   onSubmit
 }) {
   return (
@@ -233,6 +234,15 @@ export default function BookingDetailsForm({
           />
         </div>
       </div>
+
+      <button
+        type="button"
+        onClick={onAddFood}
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 font-semibold text-teal-800 transition hover:bg-teal-100"
+      >
+        <UtensilsCrossed className="h-5 w-5" />
+        {selectedItems.length ? 'Update food items' : 'Add food to this booking'}
+      </button>
 
       <SelectedItemsSummary selectedItems={selectedItems} totalPrice={totalPrice} />
 

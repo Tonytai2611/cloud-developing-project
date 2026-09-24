@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { bookingApi } from '../../booking/services/bookingApi';
+import { adminDashboardApi } from '../dashboard/services/adminDashboardApi';
 import { tableApi } from '../../table/services/tableApi';
 
 export function useAdminOrdering() {
@@ -9,6 +9,13 @@ export function useAdminOrdering() {
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('ALL');
 
+  const asList = (value) => {
+    if (Array.isArray(value)) return value;
+    if (Array.isArray(value?.data)) return value.data;
+    if (Array.isArray(value?.items)) return value.items;
+    return [];
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -16,8 +23,13 @@ export function useAdminOrdering() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const bookingsRes = await bookingApi.list();
-      setBookings(bookingsRes.data || []);
+      const [ordersRes, reservationsRes] = await Promise.all([
+        adminDashboardApi.orders(),
+        adminDashboardApi.reservations(),
+      ]);
+      const merged = [...asList(ordersRes), ...asList(reservationsRes)]
+        .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+      setBookings(merged);
 
       const tablesRes = await tableApi.list();
       setTables(tablesRes.data || []);
@@ -35,8 +47,8 @@ export function useAdminOrdering() {
 
     setLoading(true);
     try {
-      const response = await bookingApi.updateStatus(bookingId, 'CONFIRMED');
-      setBookings(bookings.map(b => b.id === bookingId ? response.data : b));
+      const response = await adminDashboardApi.updateBookingStatus(bookingId, 'CONFIRMED');
+      setBookings((current) => current.map(b => b.id === bookingId ? response : b));
       toast.success("Booking confirmed successfully");
       fetchData();
     } catch (err) {
@@ -53,8 +65,8 @@ export function useAdminOrdering() {
 
     setLoading(true);
     try {
-      await bookingApi.updateStatus(bookingId, 'REJECTED');
-      setBookings(bookings.filter(b => b.id !== bookingId));
+      await adminDashboardApi.updateBookingStatus(bookingId, 'REJECTED');
+      setBookings((current) => current.map(b => b.id === bookingId ? { ...b, status: 'REJECTED' } : b));
       toast.success("Booking rejected");
       fetchData();
     } catch (err) {
@@ -71,13 +83,28 @@ export function useAdminOrdering() {
 
     setLoading(true);
     try {
-      await bookingApi.delete(bookingId);
-      setBookings(bookings.filter(b => b.id !== bookingId));
+      await adminDashboardApi.deleteBooking(bookingId);
+      setBookings((current) => current.filter(b => b.id !== bookingId));
       toast.success("Booking deleted successfully");
     } catch (err) {
       toast.error("Failed to delete booking", {
         description: err.message
       });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdate = async (bookingId, data) => {
+    setLoading(true);
+    try {
+      const updated = await adminDashboardApi.updateBooking(bookingId, data);
+      setBookings((current) => current.map((booking) => booking.id === bookingId ? updated : booking));
+      toast.success('Booking updated successfully');
+      return updated;
+    } catch (err) {
+      toast.error('Failed to update booking', { description: err.message });
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -105,6 +132,7 @@ export function useAdminOrdering() {
     handleApprove,
     handleDelete,
     handleReject,
+    handleUpdate,
     loading,
     setFilter,
     tableOnlyBookings,
