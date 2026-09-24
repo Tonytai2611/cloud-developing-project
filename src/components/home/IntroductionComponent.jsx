@@ -229,7 +229,7 @@ const IntroductionComponent = () => {
                   <p className="text-teal-600 text-2xl font-bold mb-4">${item.price}</p>
                   <a
                     href="/menu"
-                    className="inline-block px-6 py-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors"
+                    className="inline-block px-6 py-2 bg-[#0F4C4C] text-white font-semibold rounded-lg hover:bg-teal-700 transition-colors"
                   >
                     Order Now
                   </a>
