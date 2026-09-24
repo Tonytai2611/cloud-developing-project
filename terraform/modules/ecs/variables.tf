@@ -88,6 +88,20 @@ variable "image_bucket_arn" {
   nullable    = false
 }
 
+variable "sns_topic_arns" {
+  description = "SNS topic ARNs that the ECS task can publish to."
+  type        = list(string)
+  default     = []
+  nullable    = false
+}
+
+variable "lambda_function_arns" {
+  description = "Lambda function ARNs that the ECS task can invoke."
+  type        = list(string)
+  default     = []
+  nullable    = false
+}
+
 variable "desired_count" {
   description = "The desired number of ECS tasks to run"
   type        = number

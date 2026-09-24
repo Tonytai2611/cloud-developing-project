@@ -31,3 +31,15 @@ variable "api_path_patterns" {
   type        = list(string)
   default     = []
 }
+
+variable "domain_aliases" {
+  description = "Custom hostnames served by the CloudFront distribution."
+  type        = list(string)
+  default     = []
+}
+
+variable "acm_certificate_arn" {
+  description = "ACM certificate ARN in us-east-1 for the custom CloudFront hostnames."
+  type        = string
+  default     = null
+}

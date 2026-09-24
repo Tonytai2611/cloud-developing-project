@@ -7,6 +7,7 @@ const cognito = new AWS.CognitoIdentityServiceProvider();
 const dynamodb = new AWS.DynamoDB.DocumentClient();
 const lambda = new AWS.Lambda();
 const s3 = new AWS.S3();
+const sns = new AWS.SNS();
 
 module.exports = {
   AWS,
@@ -14,4 +15,5 @@ module.exports = {
   dynamodb,
   lambda,
   s3,
+  sns,
 };

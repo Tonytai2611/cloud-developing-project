@@ -9,5 +9,5 @@ export const env = {
   awsRegion: process.env.REACT_APP_AWS_REGION || process.env.REACT_APP_REGION || 'us-east-1',
   defaultAdminEmail: process.env.REACT_APP_DEFAULT_ADMIN_EMAIL || '',
   newsletterEndpoint: process.env.REACT_APP_NEWSLETTER_ENDPOINT || '',
-  contactEmail: process.env.REACT_APP_CONTACT_EMAIL || 'contact@brewcraft.com',
+  contactEmail: process.env.REACT_APP_CONTACT_EMAIL || 'tonytai2611@gmail.com',
 };

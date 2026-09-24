@@ -64,10 +64,10 @@ export function useBookingForm({ user, selectedItems, selectedTable }) {
     setLoading(true);
 
     try {
-      const userId = user?.email || user?.username || formData.email || 'guest';
+      const userId = user?.email || user?.username || null;
       const bookingData = {
         ...formData,
-        userId,
+        ...(userId ? { userId } : {}),
         date: formatDateLocal(selectedDate),
         time: selectedTime,
         selectedItems,

@@ -10,5 +10,9 @@ terraform {
       source  = "hashicorp/archive"
       version = "~> 2.4"
     }
+    hostinger = {
+      source  = "hostinger/hostinger"
+      version = "~> 0.1.22"
+    }
   }
 }

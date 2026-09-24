@@ -18,6 +18,8 @@ const env = {
   imageBucket: process.env.IMAGE_BUCKET,
   contactHandlerFunctionName: process.env.CONTACT_HANDLER_FUNCTION_NAME,
   uploadImageFunctionName: process.env.UPLOAD_IMAGE_FUNCTION_NAME,
+  bookingEventsTopicArn: process.env.BOOKING_EVENTS_TOPIC_ARN,
+  adminGroupName: process.env.ADMIN_GROUP_NAME || 'admin',
 };
 
 const requiredRuntimeConfig = ['cognitoClientId', 'usersTable'];

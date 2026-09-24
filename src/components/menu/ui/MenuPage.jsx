@@ -24,6 +24,8 @@ function DishCard({ item, cart, favoriteIds, toggleFavorite, addToCart, updateQu
     </motion.article>;
 }
 
+const clampPrice = (value, min, max) => Math.min(Math.max(Number(value) || min, min), max);
+
 export default function Menu() {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -53,14 +55,22 @@ export default function Menu() {
             max: Math.max(1000, Math.ceil(Math.max(...prices) / 1000) * 1000)
         };
     }, [allDishes]);
+    const effectiveMaxPrice = Math.max(priceBounds.max || 0, 1000);
     const [sortBy, setSortBy] = useState('default');
     const [minPrice, setMinPrice] = useState(priceBounds.min);
     const [maxPrice, setMaxPrice] = useState(priceBounds.max);
 
     useEffect(() => {
-        setMinPrice(priceBounds.min);
-        setMaxPrice(priceBounds.max);
-    }, [priceBounds.min, priceBounds.max]);
+        setMinPrice((current) => clampPrice(current, priceBounds.min, effectiveMaxPrice));
+        setMaxPrice((current) => Math.max(clampPrice(current, priceBounds.min, effectiveMaxPrice), priceBounds.min));
+    }, [effectiveMaxPrice, priceBounds.min]);
+
+    useEffect(() => {
+        if (allDishes.length) {
+            setMinPrice(priceBounds.min);
+            setMaxPrice(effectiveMaxPrice);
+        }
+    }, [allDishes.length, effectiveMaxPrice, priceBounds.min]);
 
     const displayedMenu = useMemo(() => allDishes.filter((item) => {
         const categoryMatches = selectedCategory === 'All' || item.category === selectedCategory;
@@ -73,6 +83,8 @@ export default function Menu() {
         if (sortBy === 'name') return a.name.localeCompare(b.name);
         return 0;
     }), [allDishes, maxPrice, minPrice, searchTerm, selectedCategory, sortBy]);
+    const rangeStart = Math.min(100, Math.max(0, (minPrice / effectiveMaxPrice) * 100));
+    const rangeEnd = Math.min(100, Math.max(rangeStart, (maxPrice / effectiveMaxPrice) * 100));
 
     const priceFilter = (
         <fieldset className="menu-price">
@@ -81,10 +93,10 @@ export default function Menu() {
                 <output>{minPrice.toLocaleString('vi-VN')}₫</output>
                 <output>{maxPrice.toLocaleString('vi-VN')}₫</output>
             </div>
-            <div className="menu-range" style={{ '--range-start': `${minPrice / priceBounds.max * 100}%`, '--range-end': `${maxPrice / priceBounds.max * 100}%` }}>
+            <div className="menu-range" style={{ '--range-start': `${rangeStart}%`, '--range-end': `${rangeEnd}%` }}>
                 <div className="menu-range-track" />
-                <input aria-label="Minimum price" aria-valuetext={`${minPrice.toLocaleString('vi-VN')} dong`} type="range" min="0" max={priceBounds.max} step="1000" value={minPrice} onChange={(event) => setMinPrice(Math.min(Number(event.target.value), maxPrice))} />
-                <input aria-label="Maximum price" aria-valuetext={`${maxPrice.toLocaleString('vi-VN')} dong`} type="range" min="0" max={priceBounds.max} step="1000" value={maxPrice} onChange={(event) => setMaxPrice(Math.max(Number(event.target.value), minPrice))} />
+                <input aria-label="Minimum price" aria-valuetext={`${minPrice.toLocaleString('vi-VN')} dong`} type="range" min="0" max={effectiveMaxPrice} step="1000" value={minPrice} onChange={(event) => setMinPrice(Math.min(Number(event.target.value), maxPrice))} />
+                <input aria-label="Maximum price" aria-valuetext={`${maxPrice.toLocaleString('vi-VN')} dong`} type="range" min="0" max={effectiveMaxPrice} step="1000" value={maxPrice} onChange={(event) => setMaxPrice(Math.max(Number(event.target.value), minPrice))} />
             </div>
         </fieldset>
     );
@@ -146,7 +158,7 @@ export default function Menu() {
                     </label>
                 </div>
                 <p aria-live="polite" className="mt-2 text-xs text-slate-600">{displayedMenu.length} dishes · {minPrice.toLocaleString('vi-VN')}₫ - {maxPrice.toLocaleString('vi-VN')}₫</p>
-                {displayedMenu.length === 0 ? <div className="py-16 text-center"><p className="text-lg text-slate-600">No dishes found</p><button type="button" className="mt-3 text-sm font-semibold text-teal-700 underline" onClick={() => { setSearchTerm(''); setSelectedCategory('All'); setMinPrice(0); setMaxPrice(priceBounds.max); }}>Reset filters</button></div> : <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">{displayedMenu.map((item) => <DishCard key={item.id} item={item} cart={cart} favoriteIds={favoriteIds} toggleFavorite={toggleFavorite} addToCart={addToCart} updateQuantity={updateQuantity} />)}</div>}
+                {displayedMenu.length === 0 ? <div className="py-16 text-center"><p className="text-lg text-slate-600">No dishes found</p><button type="button" className="mt-3 text-sm font-semibold text-teal-700 underline" onClick={() => { setSearchTerm(''); setSelectedCategory('All'); setMinPrice(0); setMaxPrice(effectiveMaxPrice); }}>Reset filters</button></div> : <div className="menu-dish-grid mt-5">{displayedMenu.map((item) => <DishCard key={item.id} item={item} cart={cart} favoriteIds={favoriteIds} toggleFavorite={toggleFavorite} addToCart={addToCart} updateQuantity={updateQuantity} />)}</div>}
             </div>
             {/* Floating Cart */}
             <AnimatePresence>

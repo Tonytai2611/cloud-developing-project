@@ -36,6 +36,7 @@ resource "aws_cloudfront_distribution" "frontend_hosting" {
   enabled             = true
   default_root_object = "index.html"
   price_class         = "PriceClass_100"
+  aliases             = var.domain_aliases
 
   origin {
     domain_name              = aws_s3_bucket.frontend_hosting.bucket_regional_domain_name
@@ -122,7 +123,10 @@ resource "aws_cloudfront_distribution" "frontend_hosting" {
   }
 
   viewer_certificate {
-    cloudfront_default_certificate = true
+    cloudfront_default_certificate = var.acm_certificate_arn == null
+    acm_certificate_arn            = var.acm_certificate_arn
+    ssl_support_method             = var.acm_certificate_arn == null ? null : "sni-only"
+    minimum_protocol_version       = var.acm_certificate_arn == null ? null : "TLSv1.2_2021"
   }
 
   tags = merge(

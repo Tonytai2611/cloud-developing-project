@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const crypto = require('crypto');
 const { serialize, parse } = require('cookie');
-const { cognito, dynamodb, s3 } = require('./config/aws');
+const { cognito, dynamodb, s3, sns } = require('./config/aws');
 const { env, warnMissingRuntimeConfig } = require('./config/env');
 const { invokeJsonLambda } = require('./services/lambdaInvoker.service');
 
@@ -21,6 +21,7 @@ const BOOKING_TABLE = env.bookingTable;
 const TABLES_TABLE = env.tablesTable;
 const FAVORITES_TABLE = env.favoritesTable;
 const IMAGE_BUCKET = env.imageBucket;
+const BOOKING_EVENTS_TOPIC_ARN = env.bookingEventsTopicArn;
 
 function getConfiguredTable(tableName, res, label) {
   if (!tableName) {
@@ -60,6 +61,95 @@ function buildUpdateExpression(data, reservedNames = new Set()) {
     ExpressionAttributeNames,
     ExpressionAttributeValues,
   };
+}
+
+function getAttributeValue(attributes, name) {
+  return (attributes || []).find((attribute) => attribute.Name === name)?.Value || null;
+}
+
+async function listCognitoGroupsForUser(username) {
+  if (!env.cognitoUserPoolId || !username) return [];
+
+  try {
+    const response = await cognito.adminListGroupsForUser({
+      UserPoolId: env.cognitoUserPoolId,
+      Username: username,
+    }).promise();
+
+    return (response.Groups || []).map((group) => group.GroupName);
+  } catch (error) {
+    console.warn(`Failed to list Cognito groups for ${username}:`, error.message || error);
+    return [];
+  }
+}
+
+async function syncUserProfileFromCognito({ username, email, name, cognitoUsername, groups }) {
+  if (!USERS_TABLE) return null;
+
+  const normalizedId = (email || username || cognitoUsername || '').toLowerCase();
+  if (!normalizedId) return null;
+
+  const groupList = Array.isArray(groups) ? groups : [];
+  const isAdmin = groupList.includes(env.adminGroupName);
+  const now = new Date().toISOString();
+  const item = {
+    id: normalizedId,
+    username: normalizedId,
+    cognitoUsername: cognitoUsername || username || normalizedId,
+    email: email || normalizedId,
+    name: name || email || username || 'Customer',
+    role: isAdmin ? 'admin' : 'customer',
+    isAdmin,
+    groups: groupList,
+    updatedAt: now,
+  };
+
+  try {
+    await dynamodb.put({ TableName: USERS_TABLE, Item: item }).promise();
+    return item;
+  } catch (error) {
+    console.warn('Failed to sync user profile to DynamoDB:', error.message || error);
+    return null;
+  }
+}
+
+async function publishBookingEvent(type, booking) {
+  if (!BOOKING_EVENTS_TOPIC_ARN) return;
+
+  const payload = {
+    type,
+    bookingId: booking.id,
+    status: booking.status,
+    bookingSource: booking.bookingSource,
+    userId: booking.userId,
+    customerName: booking.customerName,
+    email: booking.email,
+    phone: booking.phone,
+    date: booking.date,
+    time: booking.time,
+    tableId: booking.tableId,
+    tableNumber: booking.tableNumber,
+    guests: booking.guests,
+    selectedItems: booking.selectedItems,
+    total: booking.totalPrice || booking.total || 0,
+    specialRequests: booking.specialRequests,
+    createdAt: booking.createdAt,
+    updatedAt: booking.updatedAt,
+  };
+
+  try {
+    await sns.publish({
+      TopicArn: BOOKING_EVENTS_TOPIC_ARN,
+      Subject: `BrewCraft ${type}`,
+      Message: JSON.stringify(payload),
+      MessageAttributes: {
+        eventType: { DataType: 'String', StringValue: type },
+        status: { DataType: 'String', StringValue: String(booking.status || 'UNKNOWN') },
+      },
+    }).promise();
+  } catch (error) {
+    console.error(`Failed to publish booking event ${type}:`, error);
+  }
 }
 
 function generateSecretHash(username) {
@@ -110,7 +200,7 @@ app.get('/health', (req, res) => {
 // confirm: confirm code then write to DynamoDB
 app.post('/confirm', async (req, res) => {
   // Accept optional email/name/role from client to avoid relying on adminGetUser.
-  let { username, code, verificationCode, email, name, role } = req.body || {};
+  let { username, code, verificationCode, email, name } = req.body || {};
   const confirmationCode = code || verificationCode;
   if (!username || !confirmationCode) return res.status(400).json({ error: 'username and confirmation code required' });
 
@@ -127,8 +217,8 @@ app.post('/confirm', async (req, res) => {
       try {
         const adminResp = await cognito.adminGetUser({ UserPoolId: env.cognitoUserPoolId, Username: username }).promise();
         const attrs = adminResp.UserAttributes || [];
-        if (!email) email = attrs.find(a => a.Name === 'email')?.Value || null;
-        if (!name) name = attrs.find(a => a.Name === 'name')?.Value || null;
+        if (!email) email = getAttributeValue(attrs, 'email');
+        if (!name) name = getAttributeValue(attrs, 'name');
       } catch (e) {
         console.warn('adminGetUser failed:', e.message || e);
       }
@@ -142,33 +232,22 @@ app.post('/confirm', async (req, res) => {
     // Normalize username to lowercase for consistent DynamoDB storage
     const normalizedUsername = username.toLowerCase();
 
+    const groups = await listCognitoGroupsForUser(username);
+    const isAdmin = groups.includes(env.adminGroupName);
     const userItem = {
       id: normalizedUsername,
       username: normalizedUsername,
       email: email || 'No Email',
       name: name || 'No Name',
-      role: role || 'customer', // Use role from client or default to 'customer'
+      role: isAdmin ? 'admin' : 'customer',
+      isAdmin,
+      groups,
       confirmedAt: new Date().toISOString()
     };
 
     try {
       await dynamodb.put({ TableName: USERS_TABLE, Item: userItem }).promise();
       console.log('DynamoDB put succeeded for', username);
-
-      // If role is 'admin', add user to Cognito 'admin' group
-      if (role === 'admin' && env.cognitoUserPoolId) {
-        try {
-          await cognito.adminAddUserToGroup({
-            UserPoolId: env.cognitoUserPoolId,
-            Username: normalizedUsername,
-            GroupName: 'admin'
-          }).promise();
-          console.log(`User ${normalizedUsername} added to 'admin' group in Cognito`);
-        } catch (groupErr) {
-          console.warn('Failed to add user to admin group:', groupErr.message || groupErr);
-          // Don't fail the entire request if group assignment fails
-        }
-      }
 
       return res.json({ message: 'User confirmed and saved to DB', item: userItem });
     } catch (putErr) {
@@ -207,19 +286,25 @@ app.post('/login', async (req, res) => {
       try {
         const payload = auth.IdToken.split('.')[1];
         const decoded = JSON.parse(Buffer.from(payload, 'base64').toString('utf8'));
-        const groups = decoded['cognito:groups'];
-        let isAdmin = false;
-        if (Array.isArray(groups)) isAdmin = groups.includes('admin');
-        if (typeof groups === 'string') isAdmin = groups.split(',').includes('admin');
+        const tokenGroups = decoded['cognito:groups'];
+        let groups = Array.isArray(tokenGroups)
+          ? tokenGroups
+          : (typeof tokenGroups === 'string' ? tokenGroups.split(',') : []);
+        const cognitoUsername = decoded['cognito:username'] || username;
+        const liveGroups = await listCognitoGroupsForUser(cognitoUsername);
+        if (liveGroups.length > 0) groups = liveGroups;
+        const isAdmin = groups.includes(env.adminGroupName);
         const email = decoded.email || null;
         userInfo = {
           username: email || username,
-          cognitoUsername: decoded['cognito:username'] || null,
+          cognitoUsername,
           email,
           name: decoded.name || null,
           role: isAdmin ? 'admin' : 'customer',
-          isAdmin: isAdmin || false
+          isAdmin,
+          groups,
         };
+        await syncUserProfileFromCognito(userInfo);
       } catch (e) {
         console.warn('Failed to parse IdToken', e.message || e);
       }
@@ -456,9 +541,11 @@ async function generateBookingId(date) {
 
 function normalizeBookingPayload(data) {
   const now = new Date().toISOString();
+  const userId = data.userId || data.customerId || null;
   return {
     id: data.id,
-    userId: data.userId || data.email || 'guest',
+    ...(userId ? { userId } : {}),
+    bookingSource: userId ? 'CUSTOMER' : 'GUEST',
     customerName: data.customerName || data.name || 'Customer',
     phone: data.phone || '',
     email: data.email || '',
@@ -536,6 +623,7 @@ app.post('/createBooking', async (req, res) => {
     const booking = normalizeBookingPayload({ ...data, id });
 
     await dynamodb.put({ TableName: tableName, Item: booking }).promise();
+    await publishBookingEvent('BOOKING_CREATED', booking);
     return res.status(201).json({ message: 'Booking created successfully', data: booking });
   } catch (error) {
     console.error('POST /createBooking error:', error);
@@ -567,6 +655,11 @@ app.put('/updateBooking', async (req, res) => {
     }
 
     const response = await dynamodb.update(params).promise();
+    const updatedBooking = response.Attributes || { id: data.id, status: data.status };
+    const eventType = ['CONFIRMED', 'REJECTED', 'CANCELLED'].includes(updatedBooking.status)
+      ? 'BOOKING_DECISION'
+      : 'BOOKING_UPDATED';
+    await publishBookingEvent(eventType, updatedBooking);
     return res.json({ message: 'Booking updated successfully', data: response.Attributes || {} });
   } catch (error) {
     console.error('PUT /updateBooking error:', error);
@@ -762,13 +855,13 @@ app.delete('/user', async (req, res) => {
 
 // Contact Us endpoint - Invoke Lambda to trigger Step Functions
 app.post('/contact', async (req, res) => {
-  const { name, email, message } = req.body || {};
+  const { name, email, phone = '', subject = 'General Inquiry', message } = req.body || {};
   if (!name || !email || !message) {
     return res.status(400).json({ error: 'Missing required fields: name, email, or message' });
   }
 
   try {
-    const response = await invokeJsonLambda(env.contactHandlerFunctionName, { name, email, message });
+    const response = await invokeJsonLambda(env.contactHandlerFunctionName, { name, email, phone, subject, message });
 
     if (response.statusCode === 200) {
       return res.json(response.body);

@@ -14,8 +14,9 @@ table_table = dynamodb.Table('TABLES_TABLE')
 sns_client = boto3.client('sns')
 
 # Dual SNS Topics for two-way notifications
-ADMIN_TOPIC_ARN = os.environ.get('ADMIN_TOPIC_ARN', 'arn:aws:sns:us-east-1:434270044081:AdminBookingAlerts')
-CUSTOMER_TOPIC_ARN = os.environ.get('CUSTOMER_TOPIC_ARN', 'arn:aws:sns:us-east-1:434270044081:CustomerNotifications')
+ADMIN_TOPIC_ARN = os.environ.get('ADMIN_TOPIC_ARN', '')
+CUSTOMER_TOPIC_ARN = os.environ.get('CUSTOMER_TOPIC_ARN', '')
+SUPPORT_EMAIL = os.environ.get('SUPPORT_EMAIL', 'tonytai2611@gmail.com')
 
 # CORS headers
 CORS_HEADERS = {
@@ -442,7 +443,7 @@ Great news! Your table reservation has been CONFIRMED.
 └──────────────────────────────────────────────────────────────┘
 
   📞  Phone    : +84 123 456 789
-  📧  Email    : tonytai2611@gmail.com
+  📧  Email    : {SUPPORT_EMAIL}
   🌐  Website  : www.brewcraft.com
   📍  Address  : 123 Restaurant Street, Ho Chi Minh City
 
@@ -497,7 +498,7 @@ We apologize, but we are unable to confirm your reservation.
 └──────────────────────────────────────────────────────────────┘
 
   📞  Phone    : +84 123 456 789
-  📧  Email    : tonytai2611@gmail.com
+  📧  Email    : {SUPPORT_EMAIL}
   🌐  Website  : www.brewcraft.com
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

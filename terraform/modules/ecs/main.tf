@@ -93,7 +93,7 @@ resource "aws_iam_role_policy" "task_runtime" {
         Effect = "Allow"
         Action = [
           "cognito-idp:AdminGetUser",
-          "cognito-idp:AdminAddUserToGroup"
+          "cognito-idp:AdminListGroupsForUser"
         ]
         Resource = var.cognito_user_pool_arn
       },
@@ -104,6 +104,20 @@ resource "aws_iam_role_policy" "task_runtime" {
           "s3:PutObject"
         ]
         Resource = "${var.image_bucket_arn}/*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "sns:Publish"
+        ]
+        Resource = var.sns_topic_arns
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "lambda:InvokeFunction"
+        ]
+        Resource = var.lambda_function_arns
       }
     ]
   })

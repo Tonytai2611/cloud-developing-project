@@ -5,9 +5,9 @@ import { MapPin, Phone, Mail, Clock, UtensilsCrossed, Facebook, Instagram, Twitt
 const Footer = () => {
   const cafeInfo = {
     name: 'BrewCraft',
-    address: '123 Main Street, Springfield',
-    phone: '123-456-7890',
-    email: 'contact@goldenspooncafe.com',
+    address: '1900 Huynh Tan Phat, District 7, Ho Chi Minh City, Vietnam',
+    phone: '0798097977',
+    email: 'tonytai2611@gmail.com',
     hours: {
       mondayToFriday: '8:00 AM - 10:00 PM',
       saturday: '9:00 AM - 11:00 PM',

@@ -8,6 +8,11 @@ output "frontend_cloudfront_url" {
   value       = "https://${module.frontend_hosting.cloudfront_domain_name}"
 }
 
+output "frontend_custom_domain_url" {
+  description = "Custom HTTPS URL for the BrewCraft frontend."
+  value       = "https://${var.domain_name}"
+}
+
 output "cloudfront_distribution_id" {
   description = "CloudFront distribution ID for frontend hosting."
   value       = module.frontend_hosting.cloudfront_distribution_id
@@ -56,4 +61,24 @@ output "tables_table_name" {
 output "favorites_table_name" {
   description = "User favourites DynamoDB table name."
   value       = module.dynamodb.favorites_table_name
+}
+
+output "booking_events_topic_arn" {
+  description = "SNS topic ARN for booking notification events."
+  value       = module.notifications.booking_events_topic_arn
+}
+
+output "booking_notifications_queue_url" {
+  description = "SQS queue URL for booking notification events."
+  value       = module.notifications.booking_notifications_queue_url
+}
+
+output "booking_worker_function_name" {
+  description = "Booking notification worker Lambda function name."
+  value       = module.notifications.booking_worker_function_name
+}
+
+output "contact_handler_function_name" {
+  description = "Contact Us Lambda function name."
+  value       = module.notifications.contact_handler_function_name
 }

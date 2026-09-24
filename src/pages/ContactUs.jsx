@@ -18,9 +18,12 @@ import {
 } from 'lucide-react';
 import { env } from '../config/env';
 
+const contactAddress = '1900 Huynh Tan Phat, District 7, Ho Chi Minh City, Vietnam';
+const googleMapsUrl = 'https://maps.app.goo.gl/EyryiPbJPd8b2gNo7';
+
 const contactInfo = [
-  { icon: MapPin, label: 'Address', value: '123 Coffee Street, Brew City, BC 10000' },
-  { icon: Phone, label: 'Phone', value: '+84 28 1234 5678', href: 'tel:+842812345678' },
+  { icon: MapPin, label: 'Address', value: contactAddress, href: googleMapsUrl, external: true },
+  { icon: Phone, label: 'Phone', value: '+84 798097977', href: 'tel:+84798097977' },
   { icon: Mail, label: 'Email', value: env.contactEmail, href: `mailto:${env.contactEmail}` },
   { icon: Clock3, label: 'Opening Hours', value: 'Mon – Fri: 7:00 AM – 10:00 PM\nSat – Sun: 8:00 AM – 11:00 PM' }
 ];
@@ -96,7 +99,7 @@ export default function ContactUs() {
             </div>
 
             <div className="space-y-6 py-7">
-              {contactInfo.map(({ icon: Icon, label, value, href }) => (
+              {contactInfo.map(({ icon: Icon, label, value, href, external }) => (
                 <div key={label} className="flex gap-4">
                   <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#e9f9f5] text-[#087f78]">
                     <Icon size={22} strokeWidth={2} />
@@ -104,7 +107,7 @@ export default function ContactUs() {
                   <div className="min-w-0 pt-1">
                     <p className="mb-1 text-sm font-semibold text-[#113c51]">{label}</p>
                     {href ? (
-                      <a href={href} className="whitespace-pre-line text-sm leading-5 text-[#155b66] hover:text-[#008c80]">{value}</a>
+                      <a href={href} target={external ? '_blank' : undefined} rel={external ? 'noreferrer' : undefined} className="whitespace-pre-line text-sm leading-5 text-[#155b66] hover:text-[#008c80]">{value}</a>
                     ) : (
                       <p className="whitespace-pre-line text-sm leading-5 text-[#155b66]">{value}</p>
                     )}
@@ -161,13 +164,13 @@ export default function ContactUs() {
         </section>
 
         <section className="mt-5 grid gap-5 lg:grid-cols-[1.15fr_1fr]">
-          <div className="relative flex min-h-[230px] items-end overflow-hidden rounded-2xl border border-white/90 bg-[#dce9e5] p-6 shadow-[0_16px_40px_rgba(25,74,74,0.10)]" style={{ backgroundImage: "linear-gradient(rgba(236,247,244,.55), rgba(236,247,244,.55)), url('/background.png')", backgroundPosition: 'center bottom', backgroundSize: 'cover' }}>
+          <a href={googleMapsUrl} target="_blank" rel="noreferrer" aria-label="Open BrewCraft location in Google Maps" className="group relative flex min-h-[230px] items-end overflow-hidden rounded-2xl border border-white/90 bg-[#dce9e5] p-6 shadow-[0_16px_40px_rgba(25,74,74,0.10)]" style={{ backgroundImage: "linear-gradient(rgba(236,247,244,.55), rgba(236,247,244,.55)), url('/background.png')", backgroundPosition: 'center bottom', backgroundSize: 'cover' }}>
             <div className="relative rounded-xl bg-white/95 px-5 py-4 shadow-md">
               <p className="font-bold text-[#09273d]">BrewCraft</p>
-              <p className="text-sm text-[#3d5d70]">123 Coffee Street, Brew City</p>
+              <p className="text-sm text-[#3d5d70]">{contactAddress}</p>
             </div>
-            <MapPin className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 fill-red-500 text-red-600" size={42} />
-          </div>
+            <MapPin className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 fill-red-500 text-red-600 transition-transform group-hover:-translate-y-[55%]" size={42} />
+          </a>
 
           <div className="rounded-2xl border border-white/90 bg-white/95 p-6 shadow-[0_16px_40px_rgba(25,74,74,0.10)] backdrop-blur sm:p-7">
             <div className="mb-5 flex items-center justify-between gap-3">
