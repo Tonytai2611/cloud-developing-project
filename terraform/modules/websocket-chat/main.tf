@@ -165,6 +165,8 @@ resource "aws_lambda_function" "chat_handler" {
       CHAT_MESSAGES_TABLE    = aws_dynamodb_table.chat_messages.name
       COGNITO_USER_POOL_ID   = var.cognito_user_pool_id
       ADMIN_GROUP_NAME       = var.admin_group_name
+      WEBSOCKET_API_ID       = aws_apigatewayv2_api.chat.id
+      WEBSOCKET_STAGE        = var.stage_name
     }
   }
 
@@ -218,6 +220,24 @@ resource "aws_lambda_permission" "allow_apigateway" {
   function_name = aws_lambda_function.chat_handler.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.chat.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "allow_booking_events" {
+  count         = var.booking_events_topic_arn == null ? 0 : 1
+  statement_id  = "AllowExecutionFromBookingEvents"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.chat_handler.function_name
+  principal     = "sns.amazonaws.com"
+  source_arn    = var.booking_events_topic_arn
+}
+
+resource "aws_sns_topic_subscription" "booking_events" {
+  count     = var.booking_events_topic_arn == null ? 0 : 1
+  topic_arn = var.booking_events_topic_arn
+  protocol  = "lambda"
+  endpoint  = aws_lambda_function.chat_handler.arn
+
+  depends_on = [aws_lambda_permission.allow_booking_events]
 }
 
 resource "aws_apigatewayv2_stage" "chat" {

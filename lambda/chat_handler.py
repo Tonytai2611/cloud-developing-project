@@ -16,6 +16,9 @@ ADMIN_GROUP_NAME = os.environ.get('ADMIN_GROUP_NAME', 'admin')
 # API Gateway Management API client (for sending messages back to clients)
 # Endpoint will be set from environment variable
 APIGW_ENDPOINT = os.environ.get('APIGW_ENDPOINT', '')
+WEBSOCKET_API_ID = os.environ.get('WEBSOCKET_API_ID', '')
+WEBSOCKET_STAGE = os.environ.get('WEBSOCKET_STAGE', 'production')
+AWS_REGION = os.environ.get('AWS_REGION', 'us-east-1')
 
 def get_apigw_client(event):
     """Create API Gateway Management API client with correct endpoint"""
@@ -31,6 +34,11 @@ def lambda_handler(event, context):
     Routes: $connect, $disconnect, sendMessage, getMessages
     """
     
+    # SNS booking events use the same Lambda so connected admins receive
+    # dashboard invalidation events without a separate realtime service.
+    if event.get('Records') and event['Records'][0].get('EventSource') == 'aws:sns':
+        return handle_booking_events(event)
+
     route_key = event.get('requestContext', {}).get('routeKey')
     connection_id = event.get('requestContext', {}).get('connectionId')
     
@@ -55,6 +63,44 @@ def lambda_handler(event, context):
         import traceback
         traceback.print_exc()
         return {'statusCode': 500, 'body': str(e)}
+
+def handle_booking_events(event):
+    """Broadcast booking/order changes to all connected admin dashboards."""
+    apigw_clients = {}
+    for record in event.get('Records', []):
+        try:
+            payload = json.loads(record.get('Sns', {}).get('Message', '{}'))
+            booking = payload
+            has_food = bool(payload.get('selectedItems')) or float(payload.get('total', 0) or 0) > 0
+            source = 'order' if has_food else 'reservation'
+            action = 'created' if payload.get('type') == 'BOOKING_CREATED' else 'updated'
+            message = {
+                'type': f'{source}.{action}',
+                'booking': booking,
+                'payload': booking,
+            }
+
+            response = connections_table.scan(
+                FilterExpression='#role = :admin',
+                ExpressionAttributeNames={'#role': 'role'},
+                ExpressionAttributeValues={':admin': 'admin'},
+            )
+            for connection in response.get('Items', []):
+                connection_id = connection.get('connectionId')
+                if not connection_id:
+                    continue
+                endpoint = APIGW_ENDPOINT or f'https://{WEBSOCKET_API_ID}.execute-api.{AWS_REGION}.amazonaws.com/{WEBSOCKET_STAGE}'
+                if not endpoint:
+                    continue
+                client = apigw_clients.setdefault(endpoint, boto3.client('apigatewaymanagementapi', endpoint_url=endpoint))
+                try:
+                    client.post_to_connection(ConnectionId=connection_id, Data=json.dumps(message, default=str).encode('utf-8'))
+                except Exception as send_error:
+                    print(f'Failed to notify dashboard connection {connection_id}: {send_error}')
+                    connections_table.delete_item(Key={'connectionId': connection_id})
+        except Exception as error:
+            print(f'Failed to broadcast booking event: {error}')
+    return {'statusCode': 200, 'body': 'Booking event processed'}
 
 def handle_connect(event, connection_id):
     """

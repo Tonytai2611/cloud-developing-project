@@ -10,7 +10,12 @@ async function request(path, options = {}) {
       ...(options.headers || {}),
     },
   });
-  const result = await response.json().catch(() => ({}));
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    await response.text();
+    throw new Error(`Admin API returned a non-JSON response (${response.status}). CloudFront may not route /api/admin/* to the backend.`);
+  }
+  const result = await response.json();
   if (!response.ok) throw new Error(result.error || result.message || `Admin API request failed (${response.status})`);
   const data = result.data === undefined ? result : result.data;
   // Accept both the current `{ data: [...] }` contract and the legacy

@@ -95,7 +95,10 @@ resource "aws_cloudfront_distribution" "frontend_hosting" {
 
       forwarded_values {
         query_string = true
-        headers      = ["Origin", "Access-Control-Request-Headers", "Access-Control-Request-Method", "Content-Type"]
+        # Admin API authentication is carried in the Cognito access token.
+        # CloudFront must forward this header to the ALB/ECS origin or every
+        # protected admin request is rejected as unauthenticated.
+        headers = ["Origin", "Access-Control-Request-Headers", "Access-Control-Request-Method", "Content-Type", "Authorization"]
 
         cookies {
           forward = "all"

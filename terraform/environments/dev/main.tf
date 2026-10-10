@@ -120,6 +120,7 @@ module "websocket_chat" {
   stage_name                    = "production"
   cognito_user_pool_id          = var.cognito_user_pool_id
   admin_group_name              = var.admin_group_name
+  booking_events_topic_arn      = module.notifications.booking_events_topic_arn
   tags                          = local.common_tags
 }
 
@@ -197,7 +198,7 @@ module "ecs" {
   image_bucket_arn      = module.image_bucket.image_bucket_arn
   sns_topic_arns        = [module.notifications.booking_events_topic_arn]
   lambda_function_arns  = [module.notifications.contact_handler_function_arn]
-  desired_count         = 1
+  desired_count         = 0
   assign_public_ip      = true
   tags                  = local.common_tags
 }

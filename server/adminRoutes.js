@@ -107,8 +107,6 @@ function createAdminRouter({ dynamodb, cognito, s3, env, tables, publishBookingE
       if (!range) return error(res, 400, 'Invalid date range');
       const orders = items.filter(isOrder);
       const reservations = items.filter(isReservation);
-      const today = new Date().toISOString().slice(0, 10);
-      const todayReservations = reservations.filter((item) => item.date === today);
       const status = (item) => String(item.status || 'PENDING').toUpperCase();
       const revenue = orders.reduce((sum, item) => sum + Number(item.totalPrice || item.total || 0), 0);
       const recentOrders = items.slice(0, 5).map((item) => ({ id: item.id, item: (item.selectedItems || []).map((x) => x.name || x.title).join(' + ') || 'Table reservation', time: item.createdAt, status: status(item), total: Number(item.totalPrice || item.total || 0) }));
@@ -140,7 +138,7 @@ function createAdminRouter({ dynamodb, cognito, s3, env, tables, publishBookingE
         totalBookings: items.length,
         foodOrders: orders.length,
         revenue,
-        todayReservations: todayReservations.length,
+        reservations: reservations.length,
         totalOrders: orders.length,
         pendingOrders: orders.filter((x) => ['PENDING', 'PREPARING'].includes(status(x))).length,
         completedOrders: orders.filter((x) => ['COMPLETED', 'CONFIRMED'].includes(status(x))).length,
@@ -150,7 +148,7 @@ function createAdminRouter({ dynamodb, cognito, s3, env, tables, publishBookingE
       if (projectedStats) {
         projectedStats.totalBookings = items.length;
         projectedStats.foodOrders = projectedStats.totalOrders;
-        projectedStats.todayReservations = todayReservations.length;
+        projectedStats.reservations = reservations.length;
         projectedStats.ordersChangePercent = percentChange(projectedStats.totalBookings, previousItems.length);
         projectedStats.revenueChangePercent = percentChange(projectedStats.revenue, previousRevenue);
       }
@@ -158,7 +156,7 @@ function createAdminRouter({ dynamodb, cognito, s3, env, tables, publishBookingE
         stats: projectedStats || calculatedStats,
         recentOrders,
         revenueSeries: Object.entries(revenueSeries).sort(([a], [b]) => a.localeCompare(b)).map(([date, value]) => ({ date, value })),
-        reservations: { total: todayReservations.length, confirmed: todayReservations.filter((x) => status(x) === 'CONFIRMED').length, pending: todayReservations.filter((x) => status(x) === 'PENDING').length, cancelled: todayReservations.filter((x) => ['CANCELLED', 'REJECTED'].includes(status(x))).length, next },
+        reservations: { total: reservations.length, confirmed: reservations.filter((x) => status(x) === 'CONFIRMED').length, pending: reservations.filter((x) => status(x) === 'PENDING').length, cancelled: reservations.filter((x) => ['CANCELLED', 'REJECTED'].includes(status(x))).length, next },
         counts: { pendingOrders: orders.filter((x) => ['PENDING', 'PREPARING'].includes(status(x))).length, unreadChats: 0, unreadNotifications: notifications ? (await scanAll(notifications)).filter((x) => !x.read).length : 0 },
       });
     } catch (err) { return error(res, 500, 'Failed to build dashboard summary', err.message); }

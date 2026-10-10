@@ -10,7 +10,7 @@ export default function StatsGrid({ summary, loading }) {
     { label: 'Total Bookings', value: summary?.stats?.totalBookings, change: summary?.stats?.ordersChangePercent, icon: ShoppingBag, tone: 'teal' },
     { label: 'Food Orders', value: summary?.stats?.foodOrders, change: null, icon: UtensilsCrossed, tone: 'amber' },
     { label: 'Revenue', value: summary?.stats?.revenue, change: summary?.stats?.revenueChangePercent, icon: CircleDollarSign, tone: 'violet' },
-    { label: "Today's Reservations", value: summary?.stats?.todayReservations, change: null, icon: CalendarCheck2, tone: 'emerald' },
+    { label: 'Reservations', value: summary?.stats?.reservations, change: null, icon: CalendarCheck2, tone: 'emerald' },
   ];
   const displayValue = (stat) => stat.value === undefined || stat.value === null ? '—' : stat.label === 'Total Revenue' ? `${Number(stat.value).toLocaleString()}đ` : Number(stat.value).toLocaleString();
   const displayChange = (change) => change === null || change === undefined ? '—' : `${change >= 0 ? '+' : ''}${change}%`;

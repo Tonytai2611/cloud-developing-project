@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { useAuth } from '../../../../hooks/useAuth';
 import { dashboardActions, filterDashboardItems, requestAdminLogout } from '../services/adminDashboardService';
 import { adminDashboardApi } from '../services/adminDashboardApi';
+import { env } from '../../../../config/env';
 
 export function useAdminDashboard() {
   const navigate = useNavigate();
@@ -35,9 +36,35 @@ export function useAdminDashboard() {
 
   useEffect(() => {
     fetchSummary();
-    const timer = window.setInterval(fetchSummary, 30000);
-    return () => window.clearInterval(timer);
   }, [fetchSummary]);
+
+  useEffect(() => {
+    if (!isAdmin || !env.websocketUrl) return undefined;
+    let active = true;
+    let socket;
+    let reconnectTimer;
+    const refreshEvents = new Set(['reservation.created', 'reservation.updated', 'order.created', 'order.updated', 'dashboard.invalidate']);
+    const connect = () => {
+      const token = localStorage.getItem('accessToken') || '';
+      if (!token || !active) return;
+      socket = new WebSocket(`${env.websocketUrl}?userId=${encodeURIComponent(user?.email || user?.username || '')}&role=admin&accessToken=${encodeURIComponent(token)}`);
+      socket.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          if (refreshEvents.has(message.type)) fetchSummary();
+        } catch {}
+      };
+      socket.onclose = () => {
+        if (active) reconnectTimer = window.setTimeout(connect, 5000);
+      };
+    };
+    connect();
+    return () => {
+      active = false;
+      window.clearTimeout(reconnectTimer);
+      socket?.close();
+    };
+  }, [fetchSummary, isAdmin, user]);
 
   const actions = useMemo(
     () => (query ? filterDashboardItems(query) : dashboardActions),

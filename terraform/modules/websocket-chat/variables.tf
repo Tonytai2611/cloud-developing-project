@@ -46,3 +46,9 @@ variable "admin_group_name" {
   type        = string
   default     = "admin"
 }
+
+variable "booking_events_topic_arn" {
+  description = "SNS topic containing booking and order events for dashboard updates."
+  type        = string
+  default     = null
+}

@@ -73,7 +73,9 @@ export function AdminNavigationCountsProvider({ children }) {
         if (!active) return;
         try {
           const data = JSON.parse(event.data);
-          if (data.type === 'conversationList' && Array.isArray(data.conversations)) {
+          if (['reservation.created', 'reservation.updated', 'order.created', 'order.updated', 'dashboard.invalidate'].includes(data.type)) {
+            refreshOrders();
+          } else if (data.type === 'conversationList' && Array.isArray(data.conversations)) {
             lastConversations = data.conversations.map((item) => (
               chatRead[item.userId] && item.lastTimestamp && item.lastTimestamp <= chatRead[item.userId]
                 ? { ...item, unread: 0 }
@@ -95,14 +97,12 @@ export function AdminNavigationCountsProvider({ children }) {
     refreshRef.current = updateOrders;
     refreshOrders();
     connect();
-    const timer = window.setInterval(refresh, 15000);
     window.addEventListener('focus', refresh);
     document.addEventListener('visibilitychange', refresh);
     window.addEventListener('brewcraft:chat-read', readChat);
     return () => {
       active = false;
       refreshRef.current = () => {};
-      window.clearInterval(timer);
       window.clearTimeout(reconnectTimer);
       window.removeEventListener('focus', refresh);
       document.removeEventListener('visibilitychange', refresh);
