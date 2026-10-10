@@ -1,9 +1,10 @@
 pipeline {
-    agent any
+    agent { label 'brewcraft-ci' }
 
     options {
         timestamps()
         disableConcurrentBuilds()
+        skipDefaultCheckout()
     }
 
     stages {
