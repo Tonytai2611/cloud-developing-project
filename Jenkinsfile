@@ -14,21 +14,46 @@ pipeline {
             }
         }
 
-        stage('Verify Environment') {
+        stage('Verify tools') {
             steps {
                 sh 'java -version'
                 sh 'git --version'
-                sh 'ls -la'
+                sh 'node --version'
+                sh 'npm --version'
+            }
+        }
+
+        stage('Install dependencies') {
+            steps {
+                sh 'npm ci'
+            }
+        }
+
+        stage('Frontend tests') {
+            steps {
+                sh 'CI=true npm test -- --watchAll=false'
+            }
+        }
+
+        stage('Frontend build') {
+            steps {
+                sh 'npm run build'
+            }
+        }
+
+        stage('Backend syntax') {
+            steps {
+                sh 'node --check server/index.js'
             }
         }
     }
 
     post {
         success {
-            echo 'BrewCraft pipeline passed'
+            echo 'BrewCraft CI passed'
         }
         failure {
-            echo 'BrewCraft pipeline failed'
+            echo 'BrewCraft CI failed; no deployment was attempted'
         }
     }
 }
