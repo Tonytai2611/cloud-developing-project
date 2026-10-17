@@ -299,7 +299,7 @@ export default function VerifyEmail() {
         {/* Footer */}
         <p className="text-center text-gray-500 text-sm mt-6">
           Having trouble?{' '}
-          <a href="#" className="text-teal-600 hover:text-teal-700 font-medium">
+          <a href="/contact-us" className="text-teal-600 hover:text-teal-700 font-medium">
             Contact Support
           </a>
         </p>

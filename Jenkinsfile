@@ -25,7 +25,9 @@ pipeline {
 
         stage('Install dependencies') {
             steps {
-                sh 'npm ci'
+                retry(2) {
+                    sh 'npm ci --fetch-retries=5 --fetch-retry-mintimeout=10000 --fetch-retry-maxtimeout=120000'
+                }
             }
         }
 

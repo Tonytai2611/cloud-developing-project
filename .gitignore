@@ -43,3 +43,4 @@ __pycache__/
 Frontend_Architecture.md
 Terraform_Architecture.md
 Backend_Architecture.md
+/docs/architecture/Jenkins.md

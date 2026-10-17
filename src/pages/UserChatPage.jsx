@@ -79,16 +79,11 @@ const UserChatPage = () => {
             console.error("Not authenticated");
             navigate('/');
         }
-    }, [user, navigate]);
+    }, [user, navigate, userEmail, ws]);
 
     // Connect to WebSocket when chat opens AND user is loaded
     useEffect(() => {
         if (!userEmail || !WS_URL) return; // Wait for config and user email
-
-        // Close existing connection if any
-        if (ws) {
-            ws.close();
-        }
 
         // Clear messages for new connection
         setMessages([]);
@@ -171,7 +166,7 @@ const UserChatPage = () => {
             if (adminLookupTimer) window.clearInterval(adminLookupTimer);
             socket.close();
         };
-    }, [userEmail]); // Re-run when userEmail changes
+    }, [userEmail, WS_URL]); // Re-run when userEmail or WebSocket URL changes
 
     // Fetch history when admin is found
     useEffect(() => {
@@ -182,7 +177,7 @@ const UserChatPage = () => {
                 user2: adminEmail
             }));
         }
-    }, [ws, isConnected, adminEmail]);
+    }, [ws, isConnected, adminEmail, userEmail]);
 
     const sendMessage = () => {
         if (!newMessage.trim() || !ws || !isConnected) return;
@@ -203,18 +198,6 @@ const UserChatPage = () => {
         ws.send(JSON.stringify(messageData));
         setNewMessage('');
         // Message will be added when server broadcasts back via newMessage event
-    };
-
-    // Smart scroll - only auto-scroll if user is at bottom
-    const messagesContainerRef = useRef(null);
-    const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
-
-    const handleScroll = () => {
-        if (messagesContainerRef.current) {
-            const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-            const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
-            setShouldAutoScroll(isAtBottom);
-        }
     };
 
     // Scroll to bottom only on initial load, not on new messages
@@ -281,8 +264,6 @@ const UserChatPage = () => {
 
                     {/* Messages Area */}
                     <div
-                        ref={messagesContainerRef}
-                        onScroll={handleScroll}
                         className="min-h-0 flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-gray-50/70 to-white/95 sm:p-6"
                     >
                         {messages.length === 0 ? (

@@ -1,7 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { adminDashboardApi } from '../dashboard/services/adminDashboardApi';
 import { tableApi } from '../../table/services/tableApi';
+
+const asList = (value) => {
+  if (Array.isArray(value)) return value;
+  if (Array.isArray(value?.data)) return value.data;
+  if (Array.isArray(value?.items)) return value.items;
+  return [];
+};
 
 export function useAdminOrdering() {
   const [bookings, setBookings] = useState([]);
@@ -9,18 +16,7 @@ export function useAdminOrdering() {
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('ALL');
 
-  const asList = (value) => {
-    if (Array.isArray(value)) return value;
-    if (Array.isArray(value?.data)) return value.data;
-    if (Array.isArray(value?.items)) return value.items;
-    return [];
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [ordersRes, reservationsRes] = await Promise.all([
@@ -40,7 +36,11 @@ export function useAdminOrdering() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleApprove = async (bookingId) => {
     if (!window.confirm('Approve this booking?')) return;

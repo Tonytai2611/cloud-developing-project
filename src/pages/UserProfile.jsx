@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { User, Mail, Shield, Camera, Save, Trash2, Loader2 } from 'lucide-react';
@@ -34,7 +34,7 @@ export default function UserProfile() {
 
   const API_URL = env.apiBaseUrl;
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('accessToken');
@@ -62,9 +62,9 @@ export default function UserProfile() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [API_URL, navigate]);
 
-  useEffect(() => { fetchProfile(); }, []);
+  useEffect(() => { fetchProfile(); }, [fetchProfile]);
 
   const handleAvatarChange = async (e) => {
     const file = e.target.files?.[0];

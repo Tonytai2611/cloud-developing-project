@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { env } from '../../config/env';
 
@@ -90,17 +90,17 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Logout function - client-side only
-  const logout = async () => {
+  const logout = useCallback(async () => {
     // Clear all tokens and user state
     localStorage.removeItem('accessToken');
     localStorage.removeItem('idToken');
     localStorage.removeItem('refreshToken');
     setAccessToken(null);
     setUser(null);
-  };
+  }, []);
 
   // Get current user info
-  const getUserInfo = async () => {
+  const getUserInfo = useCallback(async () => {
     try {
       const token = localStorage.getItem('accessToken');
       if (!token) {
@@ -133,12 +133,12 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [logout]);
 
   // Check authentication on mount
   useEffect(() => {
     getUserInfo();
-  }, []);
+  }, [getUserInfo]);
 
   const value = {
     user,

@@ -147,8 +147,8 @@ const Footer = () => {
               © {new Date().getFullYear()} {cafeInfo.name}. All rights reserved.
             </p>
             <div className="flex gap-6 text-sm text-white/50">
-              <a href="#" className="hover:text-teal-400 transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-teal-400 transition-colors">Terms of Service</a>
+              <span>Privacy Policy</span>
+              <span>Terms of Service</span>
             </div>
           </div>
         </div>
